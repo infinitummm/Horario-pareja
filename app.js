@@ -172,7 +172,15 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(renderCurrentTimeIndicator, 60000);
 });
 
-const APP_SECRET_PIN = "1505";
+const APP_SECRET_PIN_HASH = "755917ecbc61091ffa6b605d7f82bdaa4e4cbdc309124807b0fb63228d0696df";
+
+async function hashPin(pin) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 function setupPinLockSecurity() {
     const lockOverlay = document.getElementById("lock-screen-overlay");
@@ -192,11 +200,12 @@ function setupPinLockSecurity() {
         setTimeout(() => pinInput.focus(), 300);
     }
 
-    lockForm.addEventListener("submit", (e) => {
+    lockForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const enteredPin = pinInput.value.trim();
+        const enteredHash = await hashPin(enteredPin);
 
-        if (enteredPin === APP_SECRET_PIN) {
+        if (enteredHash === APP_SECRET_PIN_HASH) {
             localStorage.setItem("horario_duo_unlocked", "true");
             lockOverlay.classList.add("unlocked");
             if (errorMsg) errorMsg.style.display = "none";
