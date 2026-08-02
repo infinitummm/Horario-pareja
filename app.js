@@ -654,8 +654,133 @@ function renderMobileView() {
     }
 }
 
+const ROUTE_DATA = {
+    title: "HORARIOS DE RUTA 🚌",
+    subtitle: "Ingeniería Aeronáutica - ESAVE 2026-2",
+    inbound: {
+        title: "📥 Entrada a ESAVE",
+        subtitle: "Hora de: P6 a ESAVE",
+        tag: "P6 ➡️ ESAVE",
+        times: [
+            { time: "06:25" },
+            { time: "06:50" },
+            { time: "08:40" },
+            { time: "10:40" },
+            { time: "12:40" },
+            { time: "14:40" },
+            { time: "16:40" },
+            { time: "18:40" }
+        ]
+    },
+    outbound: {
+        title: "📤 Salida de ESAVE",
+        subtitle: "Hora de: ESAVE a P6",
+        tag: "ESAVE ➡️ P6",
+        times: [
+            { time: "06:00" },
+            { time: "06:30" },
+            { time: "08:20" },
+            { time: "10:20" },
+            { time: "12:20" },
+            { time: "14:20" },
+            { time: "16:20" },
+            { time: "18:20" },
+            { time: "19:10", special: true }
+        ]
+    }
+};
+
+function renderRoutesView() {
+    const wrapper = document.getElementById("schedule-wrapper-element");
+    let routesContainer = document.getElementById("routes-schedule-view");
+    
+    if (!routesContainer) {
+        routesContainer = document.createElement("div");
+        routesContainer.id = "routes-schedule-view";
+        routesContainer.className = "routes-view-wrapper";
+        if (wrapper) wrapper.appendChild(routesContainer);
+    }
+    
+    routesContainer.style.display = "flex";
+
+    const desktopGrid = document.getElementById("schedule-grid-couple");
+    const mobileAgenda = document.getElementById("mobile-agenda-list-view");
+    const daySelector = document.querySelector(".mobile-day-selector");
+    const addClassBtn = document.getElementById("btn-add-class");
+
+    if (desktopGrid) desktopGrid.style.display = "none";
+    if (mobileAgenda) mobileAgenda.style.display = "none";
+    if (daySelector) daySelector.style.display = "none";
+    if (addClassBtn) addClassBtn.style.display = "none";
+
+    let inboundCardsHtml = ROUTE_DATA.inbound.times.map(t => `
+        <div class="route-card-item type-in">
+            <div class="route-card-bar"></div>
+            <span class="route-time-val">⏰ ${t.time}</span>
+            <span class="route-tag-info">${ROUTE_DATA.inbound.tag}</span>
+        </div>
+    `).join("");
+
+    let outboundCardsHtml = ROUTE_DATA.outbound.times.map(t => `
+        <div class="route-card-item type-out ${t.special ? 'special-tuesday' : ''}">
+            <div class="route-card-bar"></div>
+            <span class="route-time-val">⏰ ${t.time}</span>
+            <span class="route-tag-info ${t.special ? 'special-badge' : ''}">${t.special ? '🗓️ Solo Martes' : ROUTE_DATA.outbound.tag}</span>
+        </div>
+    `).join("");
+
+    routesContainer.innerHTML = `
+        <div class="routes-header-banner">
+            <div>
+                <div class="routes-banner-title">Horarios de Ruta 🚌</div>
+                <div class="routes-banner-sub">Ingeniería Aeronáutica • ESAVE 2026-2</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <span class="route-tag-info">📍 P6 ↔️ ESAVE</span>
+            </div>
+        </div>
+
+        <div class="routes-columns-grid">
+            <div class="route-column-card">
+                <div class="route-column-header">
+                    <div>
+                        <div class="route-column-title">📥 Entrada a ESAVE</div>
+                        <div class="route-column-subtitle">Hora de: P6 a ESAVE</div>
+                    </div>
+                </div>
+                <div class="route-time-list">
+                    ${inboundCardsHtml}
+                </div>
+            </div>
+
+            <div class="route-column-card">
+                <div class="route-column-header">
+                    <div>
+                        <div class="route-column-title">📤 Salida de ESAVE</div>
+                        <div class="route-column-subtitle">Hora de: ESAVE a P6</div>
+                    </div>
+                </div>
+                <div class="route-time-list">
+                    ${outboundCardsHtml}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // Render Schedule Grid
 function renderCurrentSchedule() {
+    const routesContainer = document.getElementById("routes-schedule-view");
+    const addClassBtn = document.getElementById("btn-add-class");
+
+    if (currentScheduleView === "routes") {
+        renderRoutesView();
+        return;
+    } else {
+        if (routesContainer) routesContainer.style.display = "none";
+        if (addClassBtn) addClassBtn.style.display = "inline-flex";
+    }
+
     if (!gridBody) return;
     gridBody.innerHTML = "";
 
