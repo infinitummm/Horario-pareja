@@ -1,4 +1,4 @@
-const CACHE_NAME = "academiq-duo-v32";
+const CACHE_NAME = "horarioduo-v33";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();

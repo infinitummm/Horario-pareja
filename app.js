@@ -973,7 +973,7 @@ function updateQuickWidgets() {
 
     if (latestNoteTitle && loveNotes.length > 0) {
         const topNote = loveNotes[0];
-        const sender = topNote.sender === "he" ? "De Él" : "De Ella";
+        const sender = topNote.sender === "he" ? "De Javi" : "De Mari";
         latestNoteTitle.textContent = `"${topNote.content.substring(0, 22)}${topNote.content.length > 22 ? '...' : ''}"`;
         latestNoteSub.textContent = `${sender} • ${topNote.date}`;
     }
@@ -981,7 +981,7 @@ function updateQuickWidgets() {
     if (nextClassTitle) {
         const todayDay = new Date().getDay() || 1;
         const activeList = currentScheduleView === "he" ? HE_CLASSES : SHE_CLASSES;
-        const ownerName = currentScheduleView === "he" ? "Él" : "Ella";
+        const ownerName = currentScheduleView === "he" ? "Javi" : "Mari";
         let foundSession = null;
         let foundClass = null;
 
@@ -1043,7 +1043,7 @@ function renderTasks() {
 
         const meta = document.createElement("div");
         meta.className = "task-meta";
-        const ownerName = task.assigned === "he" ? "👦 Él" : (task.assigned === "she" ? "👧 Ella" : "👩‍❤️‍👨 Ambos");
+        const ownerName = task.assigned === "he" ? "Javi" : (task.assigned === "she" ? "Mari" : "Ambos");
         const priorityBadge = task.priority === "high" ? "🔴 Importante" : "💙 Normal";
         meta.innerHTML = `<span>Asignado: ${ownerName}</span> <span>•</span> <span>${priorityBadge}</span> <span>•</span> <span>Entrega: ${task.dueDate || 'Sin fecha'}</span>`;
 
@@ -1140,7 +1140,7 @@ function renderLoveNotes() {
         const card = document.createElement("div");
         card.className = `sticky-note note-${n.color}`;
         
-        const senderTag = n.sender === "he" ? "👦 De Él" : "👧 De Ella";
+        const senderTag = n.sender === "he" ? "De Javi" : "De Mari";
 
         card.innerHTML = `
             <div class="sticky-note-header">
@@ -1270,7 +1270,7 @@ function setupEventListeners() {
 function openDetailsModal(classObj, session) {
     currentlySelectedClassObj = classObj;
     const modal = document.getElementById("modal-details");
-    document.getElementById("detail-owner-tag").textContent = classObj.owner === "he" ? "👦 Horario de Él" : "👧 Horario de Ella";
+    document.getElementById("detail-owner-tag").textContent = classObj.owner === "he" ? "Horario de Javi" : "Horario de Mari";
     document.getElementById("detail-code").textContent = classObj.code || "SIN CÓDIGO";
     document.getElementById("detail-name").textContent = classObj.name;
     document.getElementById("detail-room").textContent = session.room;

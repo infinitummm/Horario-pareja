@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AcademiQ Duo | Horarios & Espacio de Pareja</title>
+    <title>Horario Duo | Horarios & Espacio de Pareja</title>
     <meta name="description" content="Aplicación de horario, asistencias, tareas y notitas compartidas para parejas con tema de Chiikawa.">
     
     <!-- PWA / iOS Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="AcademiQ Duo">
+    <meta name="apple-mobile-web-app-title" content="Horario Duo">
     <link rel="icon" href="icon-chiikawa.png" type="image/png">
     <link rel="apple-touch-icon" href="icon-chiikawa.png">
     <meta name="theme-color" content="#fdf2f8">
@@ -31,7 +31,7 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="logo-icon-heart"><path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    <span>AcademiQ Duo</span>
+                    <span>Horario Duo</span>
                 </div>
             </div>
             
@@ -80,9 +80,9 @@
             <header class="main-header">
                 <div class="header-info">
                     <div class="couple-badge">
-                        <span class="avatar-tag boy">Él 👦</span>
+                        <span class="avatar-tag boy">Javi</span>
                         <span class="heart-separator">•</span>
-                        <span class="avatar-tag girl">Ella 👧</span>
+                        <span class="avatar-tag girl">Mari</span>
                     </div>
                     <h1 id="title-main">Nuestro Espacio de Pareja</h1>
                     <p class="subtitle" id="subtitle-main">Horarios sincronizados, tareas y momentos juntos</p>
@@ -108,8 +108,8 @@
                 <!-- Sub-tabs for Schedules -->
                 <div class="schedule-subtabs-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 10px;">
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="subtab-btn active" data-schedule="he">👦 Mi Horario</button>
-                        <button class="subtab-btn" data-schedule="she">👧 Horario de Ella</button>
+                        <button class="subtab-btn active" data-schedule="he">Horario Javi</button>
+                        <button class="subtab-btn" data-schedule="she">Horario Mari</button>
                         <button class="subtab-btn" data-schedule="routes">🚌 Horarios de Ruta</button>
                     </div>
                     <button id="btn-add-class" class="btn btn-primary btn-sm">
@@ -149,8 +149,8 @@
                     <div class="todo-header-row">
                         <div class="todo-filters">
                             <button class="todo-filter-btn active" data-filter="all">Todas</button>
-                            <button class="todo-filter-btn" data-filter="he">De Él 👦</button>
-                            <button class="todo-filter-btn" data-filter="she">De Ella 👧</button>
+                            <button class="todo-filter-btn" data-filter="he">De Javi</button>
+                            <button class="todo-filter-btn" data-filter="she">De Mari</button>
                             <button class="todo-filter-btn" data-filter="both">Juntos</button>
                         </div>
                         <button id="btn-new-task" class="btn btn-primary btn-sm">
@@ -169,8 +169,8 @@
             <div id="view-asistencias" class="tab-view hidden transition-fade">
                 <div class="attendance-dashboard">
                     <div class="attendance-owner-switcher">
-                        <button class="attendance-owner-btn active" data-owner="he">Asistencias de Él 👦</button>
-                        <button class="attendance-owner-btn" data-owner="she">Asistencias de Ella 👧</button>
+                        <button class="attendance-owner-btn active" data-owner="he">Asistencias de Javi</button>
+                        <button class="attendance-owner-btn" data-owner="she">Asistencias de Mari</button>
                     </div>
                     <div class="attendance-grid" id="attendance-tracker-list">
                         <!-- Dual attendance cards -->
@@ -284,8 +284,8 @@
                         <div class="form-group">
                             <label for="form-class-owner">¿De quién es esta materia?</label>
                             <select id="form-class-owner">
-                                <option value="he">👦 Horario de Él</option>
-                                <option value="she">👧 Horario de Ella</option>
+                                <option value="he">Horario de Javi</option>
+                                <option value="she">Horario de Mari</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -350,8 +350,8 @@
                     <div class="form-group">
                         <label for="form-task-assigned">¿A quién pertenece?</label>
                         <select id="form-task-assigned">
-                            <option value="he">👦 Él</option>
-                            <option value="she">👧 Ella</option>
+                            <option value="he">Javi</option>
+                            <option value="she">Mari</option>
                             <option value="both" selected>Para los Dos</option>
                         </select>
                     </div>
@@ -394,8 +394,8 @@
                     <div class="form-group">
                         <label for="note-sender">De:</label>
                         <select id="note-sender">
-                            <option value="he">👦 Él</option>
-                            <option value="she">👧 Ella</option>
+                            <option value="he">Javi</option>
+                            <option value="she">Mari</option>
                         </select>
                     </div>
 
@@ -476,6 +476,6 @@
     <div id="toast" class="toast-notification"></div>
 
     <!-- Scripts -->
-    <script src="app.js?v=32.0"></script>
+    <script src="app.js?v=33.0"></script>
 </body>
 </html>
