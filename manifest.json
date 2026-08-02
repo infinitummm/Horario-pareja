@@ -1,0 +1,42 @@
+{
+  "name": "AcademiQ Duo 💕",
+  "short_name": "AcademiQ Duo",
+  "description": "App de pareja con horarios compartidos, momentos libres, tareas y notitas.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fdf2f8",
+  "theme_color": "#f43f5e",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "✍️ Escribir Notita",
+      "short_name": "Notita",
+      "description": "Abrir Rincón de Notitas de Pareja",
+      "url": "index.html#rincon"
+    },
+    {
+      "name": "⏰ Ver Horario",
+      "short_name": "Horario",
+      "description": "Ver horario de clases",
+      "url": "index.html#horarios"
+    },
+    {
+      "name": "✅ Tareas Compartidas",
+      "short_name": "Tareas",
+      "description": "Ver tareas pendientes de pareja",
+      "url": "index.html#tareas"
+    }
+  ]
+}

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AcademiQ Duo | Horarios & Espacio de Pareja</title>
+    <meta name="description" content="Aplicación de horario, asistencias, tareas y notitas compartidas para parejas con tema de Chiikawa.">
+    
+    <!-- PWA / iOS Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AcademiQ Duo">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#fdf2f8">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css?v=17.0">
+</head>
+<body class="theme-pink">
+    <div class="app-container">
+
+
+        <!-- Sidebar Navigation (Desktop only) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="logo-icon-heart"><path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <span>AcademiQ Duo</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Navegación</div>
+                <button class="nav-btn tab-trigger active" data-tab="horarios">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Horarios de Ambos
+                </button>
+                <button class="nav-btn tab-trigger" data-tab="tareas">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    Tareas Compartidas
+                </button>
+                <button class="nav-btn tab-trigger" data-tab="asistencias">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Asistencias Dual
+                </button>
+                <button class="nav-btn tab-trigger" data-tab="rincon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    Rincón del Amor
+                </button>
+                
+                <div class="nav-section-title">Temas & Estado</div>
+                <div class="theme-switcher-box">
+                    <label>Tema Visual:</label>
+                    <div class="theme-buttons-row">
+                        <button class="btn-theme-select active" data-theme="pink">Rosa</button>
+                        <button class="btn-theme-select" data-theme="white">Blanco</button>
+                        <button class="btn-theme-select" data-theme="dark">Oscuro</button>
+                    </div>
+                </div>
+
+                <div class="sync-pin-box">
+                    <span id="sync-status-badge" class="sync-badge online">Sincronizado en Vivo</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-reset-all" class="btn btn-outline btn-sm warning-text">Reiniciar Datos</button>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard View Area -->
+        <main class="main-content">
+            <!-- Top App Bar / Header -->
+            <header class="main-header">
+                <div class="header-info">
+                    <div class="couple-badge">
+                        <span class="avatar-tag boy">Él 👦</span>
+                        <span class="heart-separator">•</span>
+                        <span class="avatar-tag girl">Ella 👧</span>
+                    </div>
+                    <h1 id="title-main">Nuestro Espacio de Pareja</h1>
+                    <p class="subtitle" id="subtitle-main">Horarios sincronizados, tareas y momentos juntos</p>
+                </div>
+                
+                <!-- Top Right Chiikawa Avatar Button (Surprise Easter Egg) -->
+                <div class="header-chiikawa-avatar btn-chiikawa-dance-trigger" title="Chiikawa">
+                    <img src="chiikawa.png" alt="Chiikawa Trio">
+                </div>
+
+                <!-- Quick Theme selector for mobile header -->
+                <div class="header-controls-mobile">
+                    <select id="select-theme-mobile" class="mobile-theme-dropdown">
+                        <option value="pink">Rosa Chiikawa</option>
+                        <option value="white">Blanco Limpio</option>
+                        <option value="dark">Oscuro OLED</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- SECTION 1: HORARIOS (Pestaña Principal) -->
+            <div id="view-horarios" class="tab-view active transition-fade">
+                <!-- Sub-tabs for Schedules -->
+                <div class="schedule-subtabs-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="subtab-btn active" data-schedule="he">👦 Mi Horario</button>
+                        <button class="subtab-btn" data-schedule="she">👧 Horario de Ella</button>
+                    </div>
+                    <button id="btn-add-class" class="btn btn-primary btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Editar / Agregar Materia
+                    </button>
+                </div>
+
+                <!-- Schedule Card Container -->
+                <div class="schedule-card-wrapper" id="schedule-wrapper-element">
+                    <!-- Mobile Day Switcher -->
+                    <div class="mobile-day-selector">
+                        <button class="mobile-day-btn" data-day="1">L</button>
+                        <button class="mobile-day-btn" data-day="2">M</button>
+                        <button class="mobile-day-btn" data-day="3">M</button>
+                        <button class="mobile-day-btn" data-day="4">J</button>
+                        <button class="mobile-day-btn" data-day="5">V</button>
+                        <button class="mobile-day-btn btn-all-days" data-day="all">Todo</button>
+                    </div>
+
+                    <!-- Timetable Grid -->
+                    <div class="schedule-grid-container" id="schedule-grid-couple">
+                        <div class="grid-header-cell time-label-header">Hora</div>
+                        <div class="grid-header-cell day-header" data-day="1">Lunes</div>
+                        <div class="grid-header-cell day-header" data-day="2">Martes</div>
+                        <div class="grid-header-cell day-header" data-day="3">Miércoles</div>
+                        <div class="grid-header-cell day-header" data-day="4">Jueves</div>
+                        <div class="grid-header-cell day-header" data-day="5">Viernes</div>
+                        <div class="grid-body" id="grid-body-schedule"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: TAREAS COMPARTIDAS -->
+            <div id="view-tareas" class="tab-view hidden transition-fade">
+                <div class="todo-dashboard">
+                    <div class="todo-header-row">
+                        <div class="todo-filters">
+                            <button class="todo-filter-btn active" data-filter="all">Todas</button>
+                            <button class="todo-filter-btn" data-filter="he">De Él 👦</button>
+                            <button class="todo-filter-btn" data-filter="she">De Ella 👧</button>
+                            <button class="todo-filter-btn" data-filter="both">Juntos</button>
+                        </div>
+                        <button id="btn-new-task" class="btn btn-primary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Nueva Tarea
+                        </button>
+                    </div>
+
+                    <div id="tasks-list" class="tasks-list-container">
+                        <!-- Tasks dynamically injected -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: ASISTENCIAS DUAL -->
+            <div id="view-asistencias" class="tab-view hidden transition-fade">
+                <div class="attendance-dashboard">
+                    <div class="attendance-owner-switcher">
+                        <button class="attendance-owner-btn active" data-owner="he">Asistencias de Él 👦</button>
+                        <button class="attendance-owner-btn" data-owner="she">Asistencias de Ella 👧</button>
+                    </div>
+                    <div class="attendance-grid" id="attendance-tracker-list">
+                        <!-- Dual attendance cards -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 4: RINCÓN DEL AMOR & NOTITAS -->
+            <div id="view-rincon" class="tab-view hidden transition-fade">
+                <div class="love-corner-dashboard">
+                    <div class="love-corner-banner">
+                        <div class="banner-text">
+                            <h2>El Rincón de los Dos</h2>
+                            <p>Déjense notitas, recordatorios y fotos especiales.</p>
+                        </div>
+                        <div class="banner-chiikawa-avatar">
+                            <img src="chiikawa.png" alt="Chiikawa Trio">
+                        </div>
+                    </div>
+
+                    <!-- Sticky Love Notes Board -->
+                    <div class="love-notes-section">
+                        <div class="love-notes-header">
+                            <h3>Muro de Notitas Adhesivas</h3>
+                            <button id="btn-add-love-note" class="btn btn-primary btn-sm">
+                                Escribir Notita
+                            </button>
+                        </div>
+
+                        <div class="love-notes-grid" id="love-notes-board">
+                            <!-- Sticky notes generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Navigation Bar (Mobile) -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <button class="bottom-nav-btn active" data-tab="horarios">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Horarios</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="tareas">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span>Tareas</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="asistencias">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Asistencia</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="rincon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span>Notitas</span>
+        </button>
+    </nav>
+
+    <!-- MODAL 1: VIEW CLASS DETAILS -->
+    <div id="modal-details" class="modal-backdrop">
+        <div class="modal-card">
+            <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+            <div class="modal-header-accent" id="detail-accent-bar"></div>
+            <div class="modal-body">
+                <div class="detail-badge-group">
+                    <span id="detail-owner-tag" class="detail-code">Para quién</span>
+                    <span id="detail-code" class="detail-code">CÓDIGO</span>
+                </div>
+                <h2 id="detail-name" class="detail-subject-name">Nombre de Materia</h2>
+                
+                <div class="detail-info-grid">
+                    <div class="detail-info-item">
+                        <div class="info-icon">📍</div>
+                        <div class="info-content">
+                            <label>Salón / Ubicación</label>
+                            <span id="detail-room">Salón 101</span>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="info-icon">⏰</div>
+                        <div class="info-content">
+                            <label>Horario</label>
+                            <span id="detail-time-str">12:00 - 15:00</span>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="info-icon">🎓</div>
+                        <div class="info-content">
+                            <label>Profesor(a)</label>
+                            <span id="detail-prof">Por asignar</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button id="btn-edit-detail-class" class="btn btn-primary btn-sm" style="width: 100%;">✏️ Editar esta Materia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT/ADD CLASS -->
+    <div id="modal-edit-class" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 520px; max-height: 90vh; overflow-y: auto;">
+            <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+            <div class="modal-body">
+                <h2 id="class-editor-title" class="form-title">Editar Materia ✏️</h2>
+                <form id="class-editor-form">
+                    <input type="hidden" id="form-class-id" value="">
+                    
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="form-class-owner">¿De quién es esta materia?</label>
+                            <select id="form-class-owner">
+                                <option value="he">👦 Horario de Él</option>
+                                <option value="she">👧 Horario de Ella</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-class-color">Color distintivo:</label>
+                            <select id="form-class-color">
+                                <option value="sky">Celeste</option>
+                                <option value="amber">Ámbar / Amarillo</option>
+                                <option value="purple">Púrpura</option>
+                                <option value="rose">Rosado</option>
+                                <option value="emerald">Esmeralda / Verde</option>
+                                <option value="indigo">Índigo / Azul</option>
+                                <option value="pink">Rosa Pastel</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-class-name">Nombre de la Materia *</label>
+                        <input type="text" id="form-class-name" required placeholder="Ej: Base de Datos / Cálculo Multivariado">
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="form-class-code">Código de la Materia</label>
+                            <input type="text" id="form-class-code" placeholder="Ej: SIST0008-G01">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-class-prof">Nombre del Profesor(a)</label>
+                            <input type="text" id="form-class-prof" placeholder="Ej: HERRERA BEDOYA OSCAR ELIAS">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px; border-top: 1px solid var(--border-main); padding-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label style="font-weight: 700; font-size: 13px; color: var(--text-main);">Horarios y Salones:</label>
+                            <button type="button" id="btn-add-session-row" class="btn btn-outline btn-sm">+ Otra Sesión</button>
+                        </div>
+                        <div id="class-sessions-container" style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Session rows dynamically injected here -->
+                        </div>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 24px; justify-content: space-between;">
+                        <button type="button" id="btn-delete-class" class="btn btn-outline btn-sm warning-text" style="display: none;">🗑️ Eliminar Materia</button>
+                        <div style="display: flex; gap: 8px; margin-left: auto;">
+                            <button type="button" class="btn btn-link btn-close-modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADD TASK -->
+    <div id="modal-task-form" class="modal-backdrop">
+        <div class="modal-card">
+            <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+            <div class="modal-body">
+                <h2 class="form-title">Nueva Tarea Compartida</h2>
+                <form id="task-editor-form">
+                    <div class="form-group">
+                        <label for="form-task-assigned">¿A quién pertenece?</label>
+                        <select id="form-task-assigned">
+                            <option value="he">👦 Él</option>
+                            <option value="she">👧 Ella</option>
+                            <option value="both" selected>Para los Dos</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-task-name">Título de la Tarea *</label>
+                        <input type="text" id="form-task-name" required placeholder="Ej: Comprar boletos de cine / Estudiar cálculo">
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label for="form-task-date">Fecha de Entrega</label>
+                            <input type="date" id="form-task-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-task-priority">Prioridad</label>
+                            <select id="form-task-priority">
+                                <option value="low">Normal</option>
+                                <option value="high">Importante</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-link btn-close-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Tarea</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADD LOVE NOTE -->
+    <div id="modal-love-note" class="modal-backdrop">
+        <div class="modal-card">
+            <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+            <div class="modal-body">
+                <h2 class="form-title">Dejar una Notita</h2>
+                <form id="love-note-form">
+                    <div class="form-group">
+                        <label for="note-sender">De:</label>
+                        <select id="note-sender">
+                            <option value="he">👦 Él</option>
+                            <option value="she">👧 Ella</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="note-color">Color de la Notita:</label>
+                        <select id="note-color">
+                            <option value="pink" selected>Rosa Pastel</option>
+                            <option value="yellow">Amarillo Sol</option>
+                            <option value="blue">Celeste Suave</option>
+                            <option value="purple">Violeta Dulce</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="note-content">Mensaje / Notita *</label>
+                        <textarea id="note-content" required placeholder="Escribe algo lindo aquí..." style="width:100%; height:100px; padding:10px; border-radius:8px; border:1px solid #ccc;"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-link btn-close-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Publicar Notita</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: CHIIKAWA DANCE VIDEO OVERLAY -->
+    <div id="modal-chiikawa-dance" class="modal-backdrop">
+        <div class="modal-card chiikawa-video-card">
+            <button class="modal-close-btn" id="btn-close-chiikawa-video" aria-label="Cerrar video">&times;</button>
+            <div class="chiikawa-video-container">
+                <div class="chiikawa-video-title">Chiikawa Dance Time</div>
+                <video id="chiikawa-video-player" src="chiikawa dance.mp4" controls playsinline preload="auto"></video>
+                <div class="chiikawa-video-footer">Baila con los Chiikawas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: SYNC & COUPLE PAIRING SETTINGS -->
+    <div id="modal-sync-settings" class="modal-backdrop">
+        <div class="modal-card">
+            <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+            <div class="modal-body">
+                <h2 class="form-title">Sincronización de Pareja 🔗</h2>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                    Enlaza tu celular y tu PC (o el celular de tu pareja) para que los cambios se actualicen automáticamente en tiempo real.
+                </p>
+                
+                <div class="form-group">
+                    <label>Enlace Directo de Sincronización:</label>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <input type="text" id="sync-share-url-input" readonly style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-main); background: var(--bg-app); font-size: 12px; font-weight: 600;">
+                        <button id="btn-copy-sync-link" class="btn btn-primary btn-sm">📋 Copiar Enlace</button>
+                    </div>
+                    <small style="display: block; margin-top: 4px; font-size: 11px; color: var(--text-light);">
+                        Envía este enlace a tu pareja o ábrelo en tu celular para sincronizar ambos dispositivos al instante.
+                    </small>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="sync-custom-id-input">ID / Código del Espacio Compartido:</label>
+                    <div style="display: flex; gap: 8px; margin-top: 6px;">
+                        <input type="text" id="sync-custom-id-input" placeholder="Ej: 019fbade-1802-774b-9d4f-83f1b6c3ca01" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-main); background: var(--bg-card); font-size: 12px; color: var(--text-main);">
+                        <button id="btn-connect-sync-id" class="btn btn-primary btn-sm">🔗 Conectar</button>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 24px; justify-content: space-between;">
+                    <button type="button" id="btn-force-sync-now" class="btn btn-outline btn-sm">🔄 Sincronizar Ahora</button>
+                    <button type="button" class="btn btn-primary btn-sm btn-close-modal">Listo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notification"></div>
+
+    <!-- Scripts -->
+    <script src="app.js?v=32.0"></script>
+</body>
+</html>
