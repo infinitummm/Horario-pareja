@@ -1585,3 +1585,126 @@ h1 {
     color: #d97706;
     border-color: rgba(245, 158, 11, 0.3);
 }
+
+/* LOCK SCREEN PIN SECURITY (1505) */
+.lock-screen-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 999999;
+    background: var(--bg-app);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(25px);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lock-screen-overlay.unlocked {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.lock-screen-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-main);
+    border-radius: 24px;
+    padding: 32px 28px;
+    width: 90%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.lock-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(168, 85, 247, 0.15));
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.lock-title {
+    font-family: 'Fredoka', cursive, sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.lock-subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.lock-prompt {
+    font-size: 13px;
+    color: var(--text-main);
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.pin-input-group {
+    margin: 12px 0 4px 0;
+}
+
+#pin-input-field {
+    width: 160px;
+    height: 48px;
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 10px;
+    border-radius: 14px;
+    border: 2px solid var(--border-main);
+    background: var(--bg-app);
+    color: var(--text-main);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#pin-input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+}
+
+.pin-error-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.btn-lock-submit {
+    width: 100%;
+    height: 44px;
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 14px;
+}
+
+.lock-footer-tag {
+    font-size: 11px;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+@keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}
+
+.lock-screen-card.shake {
+    animation: shakeError 0.4s ease;
+}

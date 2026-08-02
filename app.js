@@ -143,6 +143,7 @@ function checkUrlSyncParams() {
 
 // Initialize Application
 document.addEventListener("DOMContentLoaded", () => {
+    setupPinLockSecurity();
     checkUrlSyncParams();
     registerServiceWorker();
     loadTheme();
@@ -170,6 +171,66 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("resize", renderCurrentSchedule);
     setInterval(renderCurrentTimeIndicator, 60000);
 });
+
+const APP_SECRET_PIN = "1505";
+
+function setupPinLockSecurity() {
+    const lockOverlay = document.getElementById("lock-screen-overlay");
+    const lockForm = document.getElementById("lock-pin-form");
+    const pinInput = document.getElementById("pin-input-field");
+    const errorMsg = document.getElementById("pin-error-msg");
+    const lockCard = document.querySelector(".lock-screen-card");
+    const lockAppBtn = document.getElementById("btn-lock-app");
+
+    if (!lockOverlay || !lockForm || !pinInput) return;
+
+    const isUnlocked = localStorage.getItem("horario_duo_unlocked") === "true";
+    if (isUnlocked) {
+        lockOverlay.classList.add("unlocked");
+    } else {
+        lockOverlay.classList.remove("unlocked");
+        setTimeout(() => pinInput.focus(), 300);
+    }
+
+    lockForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const enteredPin = pinInput.value.trim();
+
+        if (enteredPin === APP_SECRET_PIN) {
+            localStorage.setItem("horario_duo_unlocked", "true");
+            lockOverlay.classList.add("unlocked");
+            if (errorMsg) errorMsg.style.display = "none";
+            showToast("¡Bienvenido a Horario Duo, Javi & Mari! 🔓");
+        } else {
+            if (errorMsg) errorMsg.style.display = "block";
+            pinInput.value = "";
+            pinInput.focus();
+
+            if (lockCard) {
+                lockCard.classList.remove("shake");
+                void lockCard.offsetWidth;
+                lockCard.classList.add("shake");
+            }
+        }
+    });
+
+    pinInput.addEventListener("input", () => {
+        if (pinInput.value.length === 4) {
+            lockForm.dispatchEvent(new Event("submit"));
+        }
+    });
+
+    if (lockAppBtn) {
+        lockAppBtn.addEventListener("click", () => {
+            localStorage.removeItem("horario_duo_unlocked");
+            lockOverlay.classList.remove("unlocked");
+            pinInput.value = "";
+            if (errorMsg) errorMsg.style.display = "none";
+            setTimeout(() => pinInput.focus(), 300);
+            showToast("Aplicación bloqueada 🔒");
+        });
+    }
+}
 
 function registerServiceWorker() {
     if ("serviceWorker" in navigator) {
