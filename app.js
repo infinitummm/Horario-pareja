@@ -87,11 +87,14 @@ const loveNotesBoard = document.getElementById("love-notes-board");
 const tasksListContainer = document.getElementById("tasks-list");
 const attendanceTrackerList = document.getElementById("attendance-tracker-list");
 const toast = document.getElementById("toast");
-const MASTER_BLOB_ID = "019fc020-630f-7040-ae70-d6f6c30908ef";
+const MASTER_BLOB_ID = "019fc8ae-0406-7e83-8e25-c5e4014ae458";
 const DEFAULT_BLOB_URL = `https://jsonblob.com/api/jsonBlob/${MASTER_BLOB_ID}`;
 // Force all devices (PC, iPhone, Android) to connect to the master couple room endpoint
-let CLOUD_SYNC_URL = DEFAULT_BLOB_URL;
-localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
+let CLOUD_SYNC_URL = localStorage.getItem("duo_cloud_url") || DEFAULT_BLOB_URL;
+if (!CLOUD_SYNC_URL.includes(MASTER_BLOB_ID)) {
+    CLOUD_SYNC_URL = DEFAULT_BLOB_URL;
+    localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
+}
 
 let isPushing = false;
 let isPushingTimer = null;
@@ -300,7 +303,26 @@ async function recreateCloudBlob() {
             attendance: attendance,
             lastUpdated: Date.now()
         };
-        const res = await fetchWithTimeout("https://jsonblob.com/api/jsonBlob", {
+
+        // Always re-seed the Master Endpoint so BOTH devices stay paired to the exact same room!
+        const res = await fetchWithTimeout(DEFAULT_BLOB_URL, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            CLOUD_SYNC_URL = DEFAULT_BLOB_URL;
+            localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
+            updateSyncBadge(true);
+            return true;
+        }
+
+        // If master blob returned 404, recreate it on JSONBlob
+        const postRes = await fetchWithTimeout("https://jsonblob.com/api/jsonBlob", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -309,16 +331,12 @@ async function recreateCloudBlob() {
             body: JSON.stringify(payload)
         });
 
-        const blobId = res.headers.get("x-jsonblob-id");
-        const locationHeader = res.headers.get("Location") || res.headers.get("location");
+        const blobId = postRes.headers.get("x-jsonblob-id");
+        const locationHeader = postRes.headers.get("Location") || postRes.headers.get("location");
+        const newUrl = blobId ? `https://jsonblob.com/api/jsonBlob/${blobId}` : (locationHeader ? (locationHeader.startsWith("http") ? locationHeader : `https://jsonblob.com${locationHeader}`) : null);
 
-        if (blobId) {
-            CLOUD_SYNC_URL = `https://jsonblob.com/api/jsonBlob/${blobId}`;
-            localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
-            updateSyncBadge(true);
-            return true;
-        } else if (locationHeader) {
-            CLOUD_SYNC_URL = locationHeader.startsWith("http") ? locationHeader : `https://jsonblob.com${locationHeader}`;
+        if (newUrl) {
+            CLOUD_SYNC_URL = newUrl;
             localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
             updateSyncBadge(true);
             return true;
@@ -328,6 +346,24 @@ async function recreateCloudBlob() {
     }
     return false;
 }
+
+// Keepalive Heartbeat: Pings cloud storage every 4 hours so it NEVER expires or gets marked inactive
+function sendKeepAlivePing() {
+    const payload = {
+        heClasses: HE_CLASSES,
+        sheClasses: SHE_CLASSES,
+        notes: loveNotes,
+        tasks: duoTasks,
+        attendance: attendance,
+        lastUpdated: Date.now()
+    };
+    fetchWithTimeout(CLOUD_SYNC_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+    }).catch(() => {});
+}
+setInterval(sendKeepAlivePing, 4 * 60 * 60 * 1000);
 
 // Load state from localStorage only (no cloud)
 function loadFromLocalStorage() {

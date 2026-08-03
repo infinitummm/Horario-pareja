@@ -1,4 +1,4 @@
-const CACHE_NAME = "horarioduo-v34";
+const CACHE_NAME = "horarioduo-v35";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
