@@ -144,10 +144,24 @@ function checkUrlSyncParams() {
     }
 }
 
+async function fetchMasterSyncRegistry() {
+    try {
+        const res = await fetchWithTimeout(`data-sync.json?v=${Date.now()}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.activeMasterBlobUrl) {
+                CLOUD_SYNC_URL = data.activeMasterBlobUrl;
+                localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
+            }
+        }
+    } catch(e) {}
+}
+
 // Initialize Application
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     setupPinLockSecurity();
     checkUrlSyncParams();
+    await fetchMasterSyncRegistry();
     registerServiceWorker();
     loadTheme();
     loadFromLocalStorage();
