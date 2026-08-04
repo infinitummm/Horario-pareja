@@ -6,6 +6,21 @@
     <title>Horario Duo | Horarios & Espacio de Pareja</title>
     <meta name="description" content="Aplicación de horario, asistencias, tareas y notitas compartidas para parejas con tema de Chiikawa.">
     <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (let r of regs) r.unregister();
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let n of names) caches.delete(n);
+        });
+      }
+    </script>
     
     <!-- PWA / iOS Meta Tags -->
     <link rel="manifest" href="manifest.json">
@@ -21,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=17.0">
+    <link rel="stylesheet" href="style.css?v=39.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -504,6 +519,6 @@
     <div id="toast" class="toast-notification"></div>
 
     <!-- Scripts -->
-    <script src="app.js?v=38.0"></script>
+    <script src="app.js?v=39.0"></script>
 </body>
 </html>
