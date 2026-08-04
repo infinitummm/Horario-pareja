@@ -197,9 +197,14 @@
                     <div class="love-notes-section">
                         <div class="love-notes-header">
                             <h3>Muro de Notitas Adhesivas</h3>
-                            <button id="btn-add-love-note" class="btn btn-primary btn-sm">
-                                Escribir Notita
-                            </button>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="clearAllLoveNotes()" class="btn btn-outline btn-sm warning-text" title="Limpiar todas las notitas actuales">
+                                    🗑️ Limpiar Notitas Antiguas
+                                </button>
+                                <button id="btn-add-love-note" class="btn btn-primary btn-sm">
+                                    Escribir Notita
+                                </button>
+                            </div>
                         </div>
 
                         <div class="love-notes-grid" id="love-notes-board">
@@ -499,6 +504,6 @@
     <div id="toast" class="toast-notification"></div>
 
     <!-- Scripts -->
-    <script src="app.js?v=37.0"></script>
+    <script src="app.js?v=38.0"></script>
 </body>
 </html>

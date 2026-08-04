@@ -17,16 +17,8 @@ const DEFAULT_SHE_CLASSES = [
     { id: "she-ele", owner: "she", name: "Electrónica", code: "ELE401", professor: "Por asignar", color: "emerald", sessions: [{ day: 5, start: "15:00", end: "18:00", room: "Salón 203" }] }
 ];
 
-const DEFAULT_LOVE_NOTES = [
-    { id: "note-1", sender: "he", color: "pink", content: "¡Hola mi amor! Te dejé la app lista para que veas mi horario con profesores y el tuyo ❤️", date: Date.now() },
-    { id: "note-2", sender: "she", color: "yellow", content: "¡Me encanta el tema de Chiikawa! Nos vemos a las 3pm en el salón 101 🥰", date: Date.now() }
-];
-
-const DEFAULT_TASKS = [
-    { id: "task-1", assigned: "both", name: "Estudiar juntos los martes a las 17:00", dueDate: "2026-08-04", priority: "high", completed: false },
-    { id: "task-2", assigned: "he", name: "Taller 3 de Base de Datos", dueDate: "2026-08-05", priority: "medium", completed: false },
-    { id: "task-3", assigned: "she", name: "Taller de Cálculo Multivariado", dueDate: "2026-08-06", priority: "high", completed: false }
-];
+const DEFAULT_LOVE_NOTES = [];
+const DEFAULT_TASKS = [];
 
 let HE_CLASSES = [];
 let SHE_CLASSES = [];
@@ -87,14 +79,11 @@ const loveNotesBoard = document.getElementById("love-notes-board");
 const tasksListContainer = document.getElementById("tasks-list");
 const attendanceTrackerList = document.getElementById("attendance-tracker-list");
 const toast = document.getElementById("toast");
-const MASTER_BLOB_ID = "019fc8ae-0406-7e83-8e25-c5e4014ae458";
+const MASTER_BLOB_ID = "019fcee7-5ad8-7da9-835e-ad5d6b8362d7";
 const DEFAULT_BLOB_URL = `https://jsonblob.com/api/jsonBlob/${MASTER_BLOB_ID}`;
 // Force all devices (PC, iPhone, Android) to connect to the master couple room endpoint
-let CLOUD_SYNC_URL = localStorage.getItem("duo_cloud_url") || DEFAULT_BLOB_URL;
-if (!CLOUD_SYNC_URL.includes(MASTER_BLOB_ID)) {
-    CLOUD_SYNC_URL = DEFAULT_BLOB_URL;
-    localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
-}
+let CLOUD_SYNC_URL = DEFAULT_BLOB_URL;
+localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
 
 let isPushing = false;
 let isPushingTimer = null;
@@ -441,15 +430,19 @@ function mergeCloudState(cloud) {
     if (!cloud || typeof cloud !== "object") return false;
     let changed = false;
 
+    let deletedNoteIds = [];
+    try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
+
     // 1. Merge Love Notes by ID
     if (Array.isArray(cloud.notes)) {
         const localMap = new Map(loveNotes.map(n => [n.id, n]));
         cloud.notes.forEach(cloudNote => {
-            if (!localMap.has(cloudNote.id)) {
+            if (!localMap.has(cloudNote.id) && !deletedNoteIds.includes(cloudNote.id)) {
                 loveNotes.push(cloudNote);
                 changed = true;
             }
         });
+        loveNotes = loveNotes.filter(n => !deletedNoteIds.includes(n.id));
         loveNotes.sort((a, b) => b.date - a.date);
     }
 
@@ -1336,10 +1329,33 @@ function renderLoveNotes() {
 }
 
 window.deleteLoveNote = function(id) {
+    let deletedNoteIds = [];
+    try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
+    if (!deletedNoteIds.includes(id)) {
+        deletedNoteIds.push(id);
+        localStorage.setItem("duo_deleted_notes", JSON.stringify(deletedNoteIds));
+    }
     loveNotes = loveNotes.filter(n => n.id !== id);
     pushToCloud();
     renderLoveNotes();
-    showToast("Notita eliminada");
+    showToast("Notita eliminada 🗑️");
+};
+
+window.clearAllLoveNotes = function() {
+    if (confirm("¿Estás seguro de que deseas eliminar todas las notitas actuales?")) {
+        loveNotes.forEach(n => {
+            let deletedNoteIds = [];
+            try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
+            if (!deletedNoteIds.includes(n.id)) {
+                deletedNoteIds.push(n.id);
+                localStorage.setItem("duo_deleted_notes", JSON.stringify(deletedNoteIds));
+            }
+        });
+        loveNotes = [];
+        pushToCloud();
+        renderLoveNotes();
+        showToast("Todas las notitas han sido eliminadas 🗑️");
+    }
 };
 
 // Modals and Triggers
