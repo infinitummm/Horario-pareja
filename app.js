@@ -437,12 +437,86 @@ function saveToLocalStorage() {
     } catch(e) {}
 }
 
+function mergeCloudState(cloud) {
+    if (!cloud || typeof cloud !== "object") return false;
+    let changed = false;
+
+    // 1. Merge Love Notes by ID
+    if (Array.isArray(cloud.notes)) {
+        const localMap = new Map(loveNotes.map(n => [n.id, n]));
+        cloud.notes.forEach(cloudNote => {
+            if (!localMap.has(cloudNote.id)) {
+                loveNotes.push(cloudNote);
+                changed = true;
+            }
+        });
+        loveNotes.sort((a, b) => b.date - a.date);
+    }
+
+    // 2. Merge Tasks by ID
+    if (Array.isArray(cloud.tasks)) {
+        const localMap = new Map(duoTasks.map(t => [t.id, t]));
+        cloud.tasks.forEach(cloudTask => {
+            if (!localMap.has(cloudTask.id)) {
+                duoTasks.push(cloudTask);
+                changed = true;
+            } else {
+                const localTask = localMap.get(cloudTask.id);
+                if (cloudTask.completed !== localTask.completed) {
+                    localTask.completed = localTask.completed || cloudTask.completed;
+                    changed = true;
+                }
+            }
+        });
+    }
+
+    // 3. Merge Attendance (take max counts so counts are never erased)
+    if (cloud.attendance && typeof cloud.attendance === "object") {
+        Object.keys(cloud.attendance).forEach(classId => {
+            const cloudRec = cloud.attendance[classId];
+            if (!attendance[classId]) {
+                attendance[classId] = { present: cloudRec.present || 0, absent: cloudRec.absent || 0 };
+                changed = true;
+            } else {
+                const localRec = attendance[classId];
+                const maxPres = Math.max(localRec.present || 0, cloudRec.present || 0);
+                const maxAbs = Math.max(localRec.absent || 0, cloudRec.absent || 0);
+                if (maxPres !== localRec.present || maxAbs !== localRec.absent) {
+                    localRec.present = maxPres;
+                    localRec.absent = maxAbs;
+                    changed = true;
+                }
+            }
+        });
+    }
+
+    // 4. Merge Classes if modified
+    if (Array.isArray(cloud.heClasses) && cloud.heClasses.length > 0) {
+        if (JSON.stringify(cloud.heClasses) !== JSON.stringify(HE_CLASSES)) {
+            HE_CLASSES = cloud.heClasses;
+            changed = true;
+        }
+    }
+    if (Array.isArray(cloud.sheClasses) && cloud.sheClasses.length > 0) {
+        if (JSON.stringify(cloud.sheClasses) !== JSON.stringify(SHE_CLASSES)) {
+            SHE_CLASSES = cloud.sheClasses;
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        migrateNoteDates(loveNotes);
+        saveToLocalStorage();
+    }
+    return changed;
+}
+
 function pushToCloud() {
     saveToLocalStorage();
     isPushing = true;
 
     clearTimeout(isPushingTimer);
-    isPushingTimer = setTimeout(() => { isPushing = false; }, PUSH_SAFETY_TIMEOUT_MS);
+    isPushingTimer = setTimeout(() => { isPushing = false; }, 1000);
 
     const payload = {
         heClasses: HE_CLASSES,
@@ -482,11 +556,6 @@ function pushToCloud() {
 }
 
 function pullFromCloud() {
-    if (isPushing) {
-        scheduleSyncPoll();
-        return;
-    }
-
     fetchWithTimeout(CLOUD_SYNC_URL, {
         headers: { 
             "Accept": "application/json"
@@ -512,21 +581,14 @@ function pullFromCloud() {
 
             if (snapshot !== lastCloudSnapshot) {
                 lastCloudSnapshot = snapshot;
-
-                if (Array.isArray(cloud.heClasses) && cloud.heClasses.length > 0) HE_CLASSES = cloud.heClasses;
-                if (Array.isArray(cloud.sheClasses) && cloud.sheClasses.length > 0) SHE_CLASSES = cloud.sheClasses;
-                if (Array.isArray(cloud.notes)) loveNotes = cloud.notes;
-                if (Array.isArray(cloud.tasks)) duoTasks = cloud.tasks;
-                if (cloud.attendance && typeof cloud.attendance === "object") attendance = cloud.attendance;
-
-                migrateNoteDates(loveNotes);
-                saveToLocalStorage();
-
-                renderCurrentSchedule();
-                renderTasks();
-                renderAttendance();
-                renderLoveNotes();
-                try { updateQuickWidgets(); } catch(e) {}
+                const updated = mergeCloudState(cloud);
+                if (updated) {
+                    renderCurrentSchedule();
+                    renderTasks();
+                    renderAttendance();
+                    renderLoveNotes();
+                    try { updateQuickWidgets(); } catch(e) {}
+                }
             }
 
             syncBackoffMs = SYNC_BASE_MS;

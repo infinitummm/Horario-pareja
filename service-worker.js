@@ -1,4 +1,4 @@
-const CACHE_NAME = "horarioduo-v36";
+const CACHE_NAME = "horarioduo-v37";
 const MASTER_CLOUD_URL = "https://jsonblob.com/api/jsonBlob/019fc8ae-0406-7e83-8e25-c5e4014ae458";
 
 self.addEventListener("install", (e) => {
