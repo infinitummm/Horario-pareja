@@ -433,57 +433,33 @@ function mergeCloudState(cloud) {
     let deletedNoteIds = [];
     try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
 
-    // 1. Merge Love Notes by ID
+    // 1. Synchronize Love Notes
     if (Array.isArray(cloud.notes)) {
-        const localMap = new Map(loveNotes.map(n => [n.id, n]));
-        cloud.notes.forEach(cloudNote => {
-            if (!localMap.has(cloudNote.id) && !deletedNoteIds.includes(cloudNote.id)) {
-                loveNotes.push(cloudNote);
-                changed = true;
-            }
-        });
-        loveNotes = loveNotes.filter(n => !deletedNoteIds.includes(n.id));
-        loveNotes.sort((a, b) => b.date - a.date);
+        const filteredNotes = cloud.notes.filter(n => !deletedNoteIds.includes(n.id));
+        filteredNotes.sort((a, b) => (b.date || 0) - (a.date || 0));
+        if (JSON.stringify(filteredNotes) !== JSON.stringify(loveNotes)) {
+            loveNotes = filteredNotes;
+            changed = true;
+        }
     }
 
-    // 2. Merge Tasks by ID
+    // 2. Synchronize Tasks
     if (Array.isArray(cloud.tasks)) {
-        const localMap = new Map(duoTasks.map(t => [t.id, t]));
-        cloud.tasks.forEach(cloudTask => {
-            if (!localMap.has(cloudTask.id)) {
-                duoTasks.push(cloudTask);
-                changed = true;
-            } else {
-                const localTask = localMap.get(cloudTask.id);
-                if (cloudTask.completed !== localTask.completed) {
-                    localTask.completed = localTask.completed || cloudTask.completed;
-                    changed = true;
-                }
-            }
-        });
+        if (JSON.stringify(cloud.tasks) !== JSON.stringify(duoTasks)) {
+            duoTasks = cloud.tasks;
+            changed = true;
+        }
     }
 
-    // 3. Merge Attendance (take max counts so counts are never erased)
+    // 3. Synchronize Attendance
     if (cloud.attendance && typeof cloud.attendance === "object") {
-        Object.keys(cloud.attendance).forEach(classId => {
-            const cloudRec = cloud.attendance[classId];
-            if (!attendance[classId]) {
-                attendance[classId] = { present: cloudRec.present || 0, absent: cloudRec.absent || 0 };
-                changed = true;
-            } else {
-                const localRec = attendance[classId];
-                const maxPres = Math.max(localRec.present || 0, cloudRec.present || 0);
-                const maxAbs = Math.max(localRec.absent || 0, cloudRec.absent || 0);
-                if (maxPres !== localRec.present || maxAbs !== localRec.absent) {
-                    localRec.present = maxPres;
-                    localRec.absent = maxAbs;
-                    changed = true;
-                }
-            }
-        });
+        if (JSON.stringify(cloud.attendance) !== JSON.stringify(attendance)) {
+            attendance = cloud.attendance;
+            changed = true;
+        }
     }
 
-    // 4. Merge Classes if modified
+    // 4. Synchronize Classes
     if (Array.isArray(cloud.heClasses) && cloud.heClasses.length > 0) {
         if (JSON.stringify(cloud.heClasses) !== JSON.stringify(HE_CLASSES)) {
             HE_CLASSES = cloud.heClasses;
@@ -566,14 +542,12 @@ function setupFirebaseRealtimeSync() {
 
             if (snapshot !== lastCloudSnapshot) {
                 lastCloudSnapshot = snapshot;
-                const updated = mergeCloudState(cloudData);
-                if (updated) {
-                    renderCurrentSchedule();
-                    renderTasks();
-                    renderAttendance();
-                    renderLoveNotes();
-                    try { updateQuickWidgets(); } catch(e) {}
-                }
+                mergeCloudState(cloudData);
+                renderCurrentSchedule();
+                renderTasks();
+                renderAttendance();
+                renderLoveNotes();
+                try { updateQuickWidgets(); } catch(e) {}
             }
             updateSyncBadge(true);
         } else {
