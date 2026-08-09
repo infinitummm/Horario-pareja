@@ -504,6 +504,8 @@ function mergeCloudState(cloud) {
     return changed;
 }
 
+let firebaseUnsubscribe = null;
+
 function pushToCloud() {
     saveToLocalStorage();
     isPushing = true;
@@ -524,57 +526,47 @@ function pushToCloud() {
                         JSON.stringify(payload.notes) + JSON.stringify(payload.tasks) + 
                         JSON.stringify(payload.attendance);
 
-    fetchWithTimeout(CLOUD_SYNC_URL, {
-        method: "PUT",
-        headers: { 
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        body: JSON.stringify(payload)
-    }).then(async res => {
-        if (res.status === 404) {
-            const healed = await recreateCloudBlob();
-            if (healed) return pushToCloud();
-        }
-        if (!res.ok) throw new Error(`Push failed: ${res.status}`);
-        isPushing = false;
-        clearTimeout(isPushingTimer);
-        syncBackoffMs = SYNC_BASE_MS;
-        updateSyncBadge(true);
-    }).catch((err) => {
-        isPushing = false;
-        clearTimeout(isPushingTimer);
-        updateSyncBadge(false);
-    });
+    if (window.FirebaseSync && window.FirebaseSync.setDoc && window.FirebaseSync.docRef) {
+        window.FirebaseSync.setDoc(window.FirebaseSync.docRef, payload, { merge: true })
+            .then(() => {
+                isPushing = false;
+                clearTimeout(isPushingTimer);
+                updateSyncBadge(true);
+            })
+            .catch((err) => {
+                console.error("Firebase push error:", err);
+                isPushing = false;
+                clearTimeout(isPushingTimer);
+                updateSyncBadge(false);
+            });
+    }
 }
 
 function pullFromCloud() {
-    fetchWithTimeout(CLOUD_SYNC_URL, {
-        headers: { 
-            "Accept": "application/json"
-        }
-    })
-        .then(async res => {
-            if (res.status === 404) {
-                await recreateCloudBlob();
-                throw new Error("Blob recreated");
-            }
-            if (!res.ok) throw new Error(`Pull failed: ${res.status}`);
-            return res.json();
-        })
-        .then(cloud => {
-            if (!cloud || typeof cloud !== "object") {
-                scheduleSyncPoll();
-                return;
-            }
+    if (window.FirebaseSync && window.FirebaseSync.setDoc) {
+        pushToCloud();
+    }
+}
 
-            const snapshot = JSON.stringify(cloud.heClasses || []) + JSON.stringify(cloud.sheClasses || []) + 
-                            JSON.stringify(cloud.notes || []) + JSON.stringify(cloud.tasks || []) + 
-                            JSON.stringify(cloud.attendance || {});
+function setupFirebaseRealtimeSync() {
+    if (!window.FirebaseSync || !window.FirebaseSync.onSnapshot) return;
+
+    if (firebaseUnsubscribe) {
+        firebaseUnsubscribe();
+    }
+
+    const { onSnapshot, docRef } = window.FirebaseSync;
+
+    firebaseUnsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const cloudData = docSnap.data();
+            const snapshot = JSON.stringify(cloudData.heClasses || []) + JSON.stringify(cloudData.sheClasses || []) + 
+                            JSON.stringify(cloudData.notes || []) + JSON.stringify(cloudData.tasks || []) + 
+                            JSON.stringify(cloudData.attendance || {});
 
             if (snapshot !== lastCloudSnapshot) {
                 lastCloudSnapshot = snapshot;
-                const updated = mergeCloudState(cloud);
+                const updated = mergeCloudState(cloudData);
                 if (updated) {
                     renderCurrentSchedule();
                     renderTasks();
@@ -583,50 +575,31 @@ function pullFromCloud() {
                     try { updateQuickWidgets(); } catch(e) {}
                 }
             }
-
-            syncBackoffMs = SYNC_BASE_MS;
             updateSyncBadge(true);
-            scheduleSyncPoll();
-        })
-        .catch((err) => {
-            syncBackoffMs = Math.min(syncBackoffMs * 1.5, SYNC_MAX_MS);
-            updateSyncBadge(false);
-            scheduleSyncPoll();
-        });
+        } else {
+            pushToCloud();
+        }
+    }, (error) => {
+        console.error("Firebase Realtime listener error:", error);
+        updateSyncBadge(false);
+    });
 }
 
-// Adaptive polling with fast interval
-function scheduleSyncPoll() {
-    clearTimeout(syncIntervalId);
-    syncIntervalId = setTimeout(pullFromCloud, syncBackoffMs);
-}
-
-// Lifecycle-aware sync: handles tab visibility, focus, online/offline
 function setupSyncLifecycle() {
-    scheduleSyncPoll();
-
-    const triggerImmediatePull = () => {
-        syncBackoffMs = SYNC_BASE_MS;
-        clearTimeout(syncIntervalId);
-        pullFromCloud();
-    };
+    setupFirebaseRealtimeSync();
+    window.addEventListener("firebase-ready", setupFirebaseRealtimeSync);
 
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
-            triggerImmediatePull();
             updateHeaderDate();
         }
     });
 
-    window.addEventListener("focus", triggerImmediatePull);
-
     window.addEventListener("online", () => {
-        triggerImmediatePull();
         updateSyncBadge(true);
     });
 
     window.addEventListener("offline", () => {
-        clearTimeout(syncIntervalId);
         updateSyncBadge(false);
     });
 }

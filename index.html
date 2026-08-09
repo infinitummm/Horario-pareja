@@ -518,7 +518,46 @@
     <!-- Toast Notification -->
     <div id="toast" class="toast-notification"></div>
 
-    <!-- Scripts -->
-    <script src="app.js?v=39.0"></script>
+    <!-- Firebase JS SDK (v10 Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            enableMultiTabIndexedDbPersistence, 
+            doc, 
+            onSnapshot, 
+            setDoc 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkOhPg_u-EWr42JwCbGWCLy2fHW8D-15g",
+            authDomain: "horario-bb553.firebaseapp.com",
+            projectId: "horario-bb553",
+            storageBucket: "horario-bb553.firebasestorage.app",
+            messagingSenderId: "190530058071",
+            appId: "1:190530058071:web:8b1da5592ee7f3ca1e3012",
+            measurementId: "G-CP01QJ5771"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Enable multi-tab offline persistence
+        enableMultiTabIndexedDbPersistence(db).catch((err) => {
+            console.warn("Firebase persistence notice:", err.code);
+        });
+
+        window.FirebaseSync = {
+            db,
+            doc,
+            onSnapshot,
+            setDoc,
+            docRef: doc(db, "couples", "horario_duo_main")
+        };
+
+        window.dispatchEvent(new Event("firebase-ready"));
+    </script>
+    <!-- Main App Script -->
+    <script src="app.js?v=40.0"></script>
 </body>
 </html>
