@@ -821,39 +821,79 @@ function renderMobileView() {
     }
 }
 
-const ROUTE_DATA = {
-    title: "HORARIOS DE RUTA 🚌",
-    subtitle: "Ingeniería Aeronáutica - ESAVE 2026-2",
-    inbound: {
-        title: "📥 Entrada a ESAVE",
-        subtitle: "Hora de: P6 a ESAVE",
-        tag: "P6 ➡️ ESAVE",
-        times: [
-            { time: "06:25" },
-            { time: "06:50" },
-            { time: "08:40" },
-            { time: "10:40" },
-            { time: "12:40" },
-            { time: "14:40" },
-            { time: "16:40" },
-            { time: "18:40" }
-        ]
-    },
-    outbound: {
-        title: "📤 Salida de ESAVE",
-        subtitle: "Hora de: ESAVE a P6",
-        tag: "ESAVE ➡️ P6",
-        times: [
-            { time: "06:00" },
-            { time: "06:30" },
-            { time: "08:20" },
-            { time: "10:20" },
-            { time: "12:20" },
-            { time: "14:20" },
-            { time: "16:20" },
-            { time: "18:20" },
-            { time: "19:10", special: true }
-        ]
+let selectedRouteDay = "lunes";
+
+const ESAVE_ROUTE_DATA = {
+    title: "Horario de Ruta ESAVE 2026-2",
+    subtitle: "Escuela de Aviación del Ejército • Ruta Puerta 6 ↔ ESAVE",
+    days: {
+        lunes: {
+            name: "Lunes",
+            schedule: [
+                { salida: "06:20", salen: "-", espera: "10 min", ingreso: "06:40", ingresan: "5, 7, 9" },
+                { salida: "09:20", salen: "5", espera: "10 min", ingreso: "09:40", ingresan: "-" },
+                { salida: "11:20", salen: "7", espera: "10 min", ingreso: "11:40", ingresan: "4, 8" },
+                { salida: "12:20", salen: "9", espera: "10 min", ingreso: "12:40", ingresan: "-" },
+                { salida: "14:20", salen: "-", espera: "10 min", ingreso: "14:40", ingresan: "2" },
+                { salida: "15:20", salen: "4", espera: "10 min", ingreso: "15:40", ingresan: "6" },
+                { salida: "18:20", salen: "2, 6, 8", espera: "10 min", ingreso: "18:40", ingresan: "-" }
+            ]
+        },
+        martes: {
+            name: "Martes",
+            schedule: [
+                { salida: "06:20", salen: "-", espera: "10 min", ingreso: "06:40", ingresan: "1, 3, 5, 7" },
+                { salida: "11:20", salen: "-", espera: "10 min", ingreso: "11:40", ingresan: "4, 8" },
+                { salida: "12:20", salen: "5", espera: "10 min", ingreso: "12:40", ingresan: "2, 6" },
+                { salida: "13:20", salen: "1, 3, 7", espera: "10 min", ingreso: "13:40", ingresan: "-" },
+                { salida: "17:20", salen: "4, 8", espera: "10 min", ingreso: "17:40", ingresan: "-" },
+                { salida: "18:20", salen: "6", espera: "10 min", ingreso: "18:40", ingresan: "-" },
+                { salida: "19:20", salen: "2", espera: "10 min", ingreso: "19:40", ingresan: "-" }
+            ]
+        },
+        miercoles: {
+            name: "Miércoles",
+            schedule: [
+                { salida: "06:20", salen: "-", espera: "10 min", ingreso: "06:40", ingresan: "1, 5, 7" },
+                { salida: "08:20", salen: "-", espera: "10 min", ingreso: "08:40", ingresan: "9" },
+                { salida: "09:20", salen: "-", espera: "10 min", ingreso: "09:40", ingresan: "3" },
+                { salida: "10:20", salen: "1", espera: "10 min", ingreso: "10:40", ingresan: "-" },
+                { salida: "11:20", salen: "-", espera: "10 min", ingreso: "11:40", ingresan: "2" },
+                { salida: "12:20", salen: "-", espera: "10 min", ingreso: "12:40", ingresan: "4, 6, 8" },
+                { salida: "13:20", salen: "3, 5, 7", espera: "10 min", ingreso: "13:40", ingresan: "-" },
+                { salida: "14:20", salen: "9", espera: "10 min", ingreso: "14:40", ingresan: "-" },
+                { salida: "16:20", salen: "4", espera: "10 min", ingreso: "16:40", ingresan: "-" },
+                { salida: "18:20", salen: "2, 6, 8", espera: "10 min", ingreso: "18:40", ingresan: "-" }
+            ]
+        },
+        jueves: {
+            name: "Jueves",
+            schedule: [
+                { salida: "06:20", salen: "-", espera: "10 min", ingreso: "06:40", ingresan: "1, 3, 5, 7, 9" },
+                { salida: "10:20", salen: "5, 9", espera: "10 min", ingreso: "10:40", ingresan: "-" },
+                { salida: "11:20", salen: "-", espera: "10 min", ingreso: "11:40", ingresan: "2, 8" },
+                { salida: "12:20", salen: "1, 7", espera: "10 min", ingreso: "12:40", ingresan: "4, 6" },
+                { salida: "13:20", salen: "3", espera: "10 min", ingreso: "13:40", ingresan: "-" },
+                { salida: "15:20", salen: "4", espera: "10 min", ingreso: "15:40", ingresan: "-" },
+                { salida: "17:20", salen: "8", espera: "10 min", ingreso: "17:40", ingresan: "-" },
+                { salida: "18:20", salen: "2, 6", espera: "10 min", ingreso: "18:40", ingresan: "-" }
+            ]
+        },
+        viernes: {
+            name: "Viernes",
+            schedule: [
+                { salida: "06:20", salen: "-", espera: "10 min", ingreso: "06:40", ingresan: "1, 7" },
+                { salida: "08:20", salen: "-", espera: "10 min", ingreso: "08:40", ingresan: "5, 9" },
+                { salida: "09:20", salen: "-", espera: "10 min", ingreso: "09:40", ingresan: "3" },
+                { salida: "11:20", salen: "1, 5", espera: "10 min", ingreso: "11:40", ingresan: "2, 8" },
+                { salida: "12:20", salen: "-", espera: "10 min", ingreso: "12:40", ingresan: "4, 6" },
+                { salida: "13:20", salen: "3, 7", espera: "10 min", ingreso: "13:40", ingresan: "-" },
+                { salida: "14:20", salen: "8, 9", espera: "10 min", ingreso: "14:40", ingresan: "-" },
+                { salida: "15:20", salen: "2", espera: "10 min", ingreso: "15:40", ingresan: "-" },
+                { salida: "17:20", salen: "6", espera: "10 min", ingreso: "17:40", ingresan: "-" },
+                { salida: "18:20", salen: "4", espera: "10 min", ingreso: "18:40", ingresan: "-" }
+            ]
+        }
     }
 };
 
@@ -880,59 +920,87 @@ function renderRoutesView() {
     if (daySelector) daySelector.style.display = "none";
     if (addClassBtn) addClassBtn.style.display = "none";
 
-    let inboundCardsHtml = ROUTE_DATA.inbound.times.map(t => `
-        <div class="route-card-item type-in">
-            <div class="route-card-bar"></div>
-            <span class="route-time-val">⏰ ${t.time}</span>
-            <span class="route-tag-info">${ROUTE_DATA.inbound.tag}</span>
-        </div>
-    `).join("");
+    const dayKeys = ["lunes", "martes", "miercoles", "jueves", "viernes"];
+    const currentJsDay = new Date().getDay(); // 1 = Mon, 5 = Fri
+    if (!selectedRouteDay || selectedRouteDay === "default") {
+        selectedRouteDay = (currentJsDay >= 1 && currentJsDay <= 5) ? dayKeys[currentJsDay - 1] : "lunes";
+    }
 
-    let outboundCardsHtml = ROUTE_DATA.outbound.times.map(t => `
-        <div class="route-card-item type-out ${t.special ? 'special-tuesday' : ''}">
-            <div class="route-card-bar"></div>
-            <span class="route-time-val">⏰ ${t.time}</span>
-            <span class="route-tag-info ${t.special ? 'special-badge' : ''}">${t.special ? '🗓️ Solo Martes' : ROUTE_DATA.outbound.tag}</span>
+    const dayFilterHtml = `
+        <div class="routes-day-filter-bar">
+            <button class="route-day-pill ${selectedRouteDay === 'lunes' ? 'active' : ''}" data-day="lunes">Lunes</button>
+            <button class="route-day-pill ${selectedRouteDay === 'martes' ? 'active' : ''}" data-day="martes">Martes</button>
+            <button class="route-day-pill ${selectedRouteDay === 'miercoles' ? 'active' : ''}" data-day="miercoles">Miércoles</button>
+            <button class="route-day-pill ${selectedRouteDay === 'jueves' ? 'active' : ''}" data-day="jueves">Jueves</button>
+            <button class="route-day-pill ${selectedRouteDay === 'viernes' ? 'active' : ''}" data-day="viernes">Viernes</button>
+            <button class="route-day-pill ${selectedRouteDay === 'all' ? 'active' : ''}" data-day="all">Todos los días</button>
         </div>
-    `).join("");
+    `;
+
+    const activeKeys = selectedRouteDay === "all" ? dayKeys : [selectedRouteDay];
+
+    const cardsHtml = activeKeys.map(key => {
+        const dayInfo = ESAVE_ROUTE_DATA.days[key];
+        if (!dayInfo) return "";
+
+        const tableRows = dayInfo.schedule.map(item => `
+            <tr>
+                <td class="time-cell">${item.salida}</td>
+                <td class="people-tag ${item.salen !== '-' ? 'has-people' : ''}">${item.salen !== '-' ? 'Salen: ' + item.salen : '—'}</td>
+                <td><span class="wait-tag">${item.espera}</span></td>
+                <td class="time-cell">${item.ingreso}</td>
+                <td class="people-tag ${item.ingresan !== '-' ? 'has-people' : ''}">${item.ingresan !== '-' ? 'Ingresan: ' + item.ingresan : '—'}</td>
+            </tr>
+        `).join("");
+
+        return `
+            <div class="esave-day-card">
+                <div class="esave-day-title">
+                    <span>${dayInfo.name}</span>
+                    <span style="font-size:12px; font-weight:500; color:var(--text-muted);">ESAVE 2026-2</span>
+                </div>
+                <div class="esave-table-container">
+                    <table class="esave-table">
+                        <thead>
+                            <tr>
+                                <th>Salida ESAVE</th>
+                                <th>Pasajeros</th>
+                                <th>Espera P6</th>
+                                <th>Ingreso ESAVE</th>
+                                <th>Pasajeros</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }).join("");
 
     routesContainer.innerHTML = `
         <div class="routes-header-banner">
             <div>
-                <div class="routes-banner-title">Horarios de Ruta 🚌</div>
-                <div class="routes-banner-sub">Ingeniería Aeronáutica • ESAVE 2026-2</div>
+                <div class="routes-banner-title">${ESAVE_ROUTE_DATA.title}</div>
+                <div class="routes-banner-sub">${ESAVE_ROUTE_DATA.subtitle}</div>
             </div>
-            <div style="display:flex; gap:8px;">
-                <span class="route-tag-info">📍 P6 ↔️ ESAVE</span>
-            </div>
+            <span class="routes-tag-pill">Puerta 6 ↔ ESAVE</span>
         </div>
 
-        <div class="routes-columns-grid">
-            <div class="route-column-card">
-                <div class="route-column-header">
-                    <div>
-                        <div class="route-column-title">📥 Entrada a ESAVE</div>
-                        <div class="route-column-subtitle">Hora de: P6 a ESAVE</div>
-                    </div>
-                </div>
-                <div class="route-time-list">
-                    ${inboundCardsHtml}
-                </div>
-            </div>
+        ${dayFilterHtml}
 
-            <div class="route-column-card">
-                <div class="route-column-header">
-                    <div>
-                        <div class="route-column-title">📤 Salida de ESAVE</div>
-                        <div class="route-column-subtitle">Hora de: ESAVE a P6</div>
-                    </div>
-                </div>
-                <div class="route-time-list">
-                    ${outboundCardsHtml}
-                </div>
-            </div>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            ${cardsHtml}
         </div>
     `;
+
+    routesContainer.querySelectorAll(".route-day-pill").forEach(pill => {
+        pill.addEventListener("click", (e) => {
+            selectedRouteDay = e.target.dataset.day;
+            renderRoutesView();
+        });
+    });
 }
 
 // Render Schedule Grid
