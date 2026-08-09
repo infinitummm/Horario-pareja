@@ -563,17 +563,34 @@ function pushToCloud() {
     }
 }
 
-function pullFromCloud() {
-    if (window.FirebaseSync && window.FirebaseSync.setDoc) {
-        pushToCloud();
+async function syncNow() {
+    if (!window.FirebaseSync || !window.FirebaseSync.getDoc || !window.FirebaseSync.docRef) return;
+    try {
+        const docSnap = await window.FirebaseSync.getDoc(window.FirebaseSync.docRef);
+        if (docSnap.exists()) {
+            const cloudData = docSnap.data();
+            mergeCloudState(cloudData);
+            renderCurrentSchedule();
+            renderTasks();
+            renderAttendance();
+            renderLoveNotes();
+            try { updateQuickWidgets(); } catch(e) {}
+            updateSyncBadge(true);
+        }
+    } catch(err) {
+        console.warn("syncNow fetch error:", err);
     }
+}
+
+function pullFromCloud() {
+    syncNow();
 }
 
 function setupFirebaseRealtimeSync() {
     if (!window.FirebaseSync || !window.FirebaseSync.onSnapshot) return;
 
     if (firebaseUnsubscribe) {
-        firebaseUnsubscribe();
+        try { firebaseUnsubscribe(); } catch(e) {}
     }
 
     const { onSnapshot, docRef } = window.FirebaseSync;
@@ -581,19 +598,12 @@ function setupFirebaseRealtimeSync() {
     firebaseUnsubscribe = onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
             const cloudData = docSnap.data();
-            const snapshot = JSON.stringify(cloudData.heClasses || []) + JSON.stringify(cloudData.sheClasses || []) + 
-                            JSON.stringify(cloudData.notes || []) + JSON.stringify(cloudData.tasks || []) + 
-                            JSON.stringify(cloudData.attendance || {});
-
-            if (snapshot !== lastCloudSnapshot) {
-                lastCloudSnapshot = snapshot;
-                mergeCloudState(cloudData);
-                renderCurrentSchedule();
-                renderTasks();
-                renderAttendance();
-                renderLoveNotes();
-                try { updateQuickWidgets(); } catch(e) {}
-            }
+            mergeCloudState(cloudData);
+            renderCurrentSchedule();
+            renderTasks();
+            renderAttendance();
+            renderLoveNotes();
+            try { updateQuickWidgets(); } catch(e) {}
             updateSyncBadge(true);
         } else {
             pushToCloud();
@@ -606,21 +616,42 @@ function setupFirebaseRealtimeSync() {
 
 function setupSyncLifecycle() {
     setupFirebaseRealtimeSync();
-    window.addEventListener("firebase-ready", setupFirebaseRealtimeSync);
+    syncNow();
+
+    window.addEventListener("firebase-ready", () => {
+        setupFirebaseRealtimeSync();
+        syncNow();
+    });
 
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
             updateHeaderDate();
+            setupFirebaseRealtimeSync();
+            syncNow();
         }
     });
 
+    window.addEventListener("focus", () => {
+        setupFirebaseRealtimeSync();
+        syncNow();
+    });
+
     window.addEventListener("online", () => {
+        setupFirebaseRealtimeSync();
+        syncNow();
         updateSyncBadge(true);
     });
 
     window.addEventListener("offline", () => {
         updateSyncBadge(false);
     });
+
+    // 8-second safety heartbeat poll for mobile background wakeups
+    setInterval(() => {
+        if (!document.hidden && navigator.onLine) {
+            syncNow();
+        }
+    }, 8000);
 }
 
 // Navigation between Tabs
