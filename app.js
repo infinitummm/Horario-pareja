@@ -433,30 +433,75 @@ function mergeCloudState(cloud) {
     let deletedNoteIds = [];
     try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
 
-    // 1. Synchronize Love Notes
+    // 1. Merge Love Notes (combine local + cloud by ID, filtering deleted ones)
     if (Array.isArray(cloud.notes)) {
-        const filteredNotes = cloud.notes.filter(n => !deletedNoteIds.includes(n.id));
-        filteredNotes.sort((a, b) => (b.date || 0) - (a.date || 0));
-        if (JSON.stringify(filteredNotes) !== JSON.stringify(loveNotes)) {
-            loveNotes = filteredNotes;
+        const notesMap = new Map();
+
+        // Add cloud notes (filtering out deleted ones)
+        cloud.notes.forEach(n => {
+            if (n && n.id && !deletedNoteIds.includes(n.id)) {
+                notesMap.set(n.id, n);
+            }
+        });
+
+        // Add local notes (preserving newly created local notes that haven't synced yet)
+        loveNotes.forEach(n => {
+            if (n && n.id && !deletedNoteIds.includes(n.id)) {
+                if (!notesMap.has(n.id)) {
+                    notesMap.set(n.id, n);
+                    changed = true;
+                }
+            }
+        });
+
+        const mergedNotes = Array.from(notesMap.values());
+        mergedNotes.sort((a, b) => (b.date || 0) - (a.date || 0));
+
+        if (JSON.stringify(mergedNotes) !== JSON.stringify(loveNotes)) {
+            loveNotes = mergedNotes;
             changed = true;
         }
     }
 
-    // 2. Synchronize Tasks
+    // 2. Merge Tasks (combine local + cloud by ID)
     if (Array.isArray(cloud.tasks)) {
-        if (JSON.stringify(cloud.tasks) !== JSON.stringify(duoTasks)) {
-            duoTasks = cloud.tasks;
+        const tasksMap = new Map();
+        cloud.tasks.forEach(t => {
+            if (t && t.id) tasksMap.set(t.id, t);
+        });
+        duoTasks.forEach(t => {
+            if (t && t.id) {
+                if (!tasksMap.has(t.id)) {
+                    tasksMap.set(t.id, t);
+                    changed = true;
+                } else {
+                    const cloudT = tasksMap.get(t.id);
+                    if (t.completed && !cloudT.completed) {
+                        cloudT.completed = true;
+                        changed = true;
+                    }
+                }
+            }
+        });
+        const mergedTasks = Array.from(tasksMap.values());
+        if (JSON.stringify(mergedTasks) !== JSON.stringify(duoTasks)) {
+            duoTasks = mergedTasks;
             changed = true;
         }
     }
 
     // 3. Synchronize Attendance
     if (cloud.attendance && typeof cloud.attendance === "object") {
-        if (JSON.stringify(cloud.attendance) !== JSON.stringify(attendance)) {
-            attendance = cloud.attendance;
-            changed = true;
-        }
+        Object.keys(cloud.attendance).forEach(classId => {
+            const cloudRec = cloud.attendance[classId] || {};
+            const localRec = attendance[classId] || { present: 0, absent: 0 };
+            const maxPres = Math.max(localRec.present || 0, cloudRec.present || 0);
+            const maxAbs = Math.max(localRec.absent || 0, cloudRec.absent || 0);
+            if (!attendance[classId] || localRec.present !== maxPres || localRec.absent !== maxAbs) {
+                attendance[classId] = { present: maxPres, absent: maxAbs };
+                changed = true;
+            }
+        });
     }
 
     // 4. Synchronize Classes
