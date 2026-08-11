@@ -571,9 +571,10 @@
             docRef: doc(db, "couples", "horario_duo_main")
         };
 
+        window.FirebaseSyncReady = true;
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=49.0"></script>
+    <script src="app.js?v=50.0"></script>
 </body>
 </html>

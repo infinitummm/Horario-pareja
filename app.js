@@ -575,7 +575,9 @@ function pullFromCloud() {
 }
 
 function setupFirebaseRealtimeSync() {
-    if (!window.FirebaseSync || !window.FirebaseSync.onSnapshot) return;
+    if (!window.FirebaseSync || !window.FirebaseSync.onSnapshot || !window.FirebaseSync.docRef) {
+        return false;
+    }
 
     if (firebaseUnsubscribe) {
         try { firebaseUnsubscribe(); } catch(e) {}
@@ -600,33 +602,44 @@ function setupFirebaseRealtimeSync() {
         console.error("Firebase Realtime listener error:", error);
         updateSyncBadge(false);
     });
+
+    return true;
+}
+
+function initFirebaseSyncWithRetry() {
+    if (setupFirebaseRealtimeSync()) {
+        syncNow();
+    } else {
+        const checkTimer = setInterval(() => {
+            if (setupFirebaseRealtimeSync()) {
+                syncNow();
+                clearInterval(checkTimer);
+            }
+        }, 200);
+        setTimeout(() => clearInterval(checkTimer), 8000);
+    }
 }
 
 function setupSyncLifecycle() {
-    setupFirebaseRealtimeSync();
-    syncNow();
+    initFirebaseSyncWithRetry();
 
     window.addEventListener("firebase-ready", () => {
-        setupFirebaseRealtimeSync();
-        syncNow();
+        initFirebaseSyncWithRetry();
     });
 
     document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
             updateHeaderDate();
-            setupFirebaseRealtimeSync();
-            syncNow();
+            initFirebaseSyncWithRetry();
         }
     });
 
     window.addEventListener("focus", () => {
-        setupFirebaseRealtimeSync();
-        syncNow();
+        initFirebaseSyncWithRetry();
     });
 
     window.addEventListener("online", () => {
-        setupFirebaseRealtimeSync();
-        syncNow();
+        initFirebaseSyncWithRetry();
         updateSyncBadge(true);
     });
 
@@ -1840,9 +1853,10 @@ function setupSyncPin() {
 
     if (forceSyncBtn) {
         forceSyncBtn.addEventListener("click", () => {
-            showToast("🔄 Sincronizando en vivo...");
-            pullFromCloud();
+            showToast("🔄 Conectando y sincronizando con Firebase...");
+            initFirebaseSyncWithRetry();
             pushToCloud();
+            closeAllModals();
         });
     }
 }
