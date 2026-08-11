@@ -393,6 +393,7 @@ function loadFromLocalStorage() {
     migrateNoteDates(loveNotes);
 
     try { localStorage.removeItem("duo_deleted_tasks"); } catch(e) {}
+    try { localStorage.removeItem("duo_deleted_notes"); } catch(e) {}
 
     const savedTasks = localStorage.getItem("duo_tasks");
     if (savedTasks) {
@@ -436,35 +437,11 @@ function mergeCloudState(cloud) {
     if (!cloud || typeof cloud !== "object") return false;
     let changed = false;
 
-    let deletedNoteIds = [];
-    try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
-
-    // 1. Merge Love Notes (combine local + cloud by ID, filtering deleted ones)
+    // 1. Synchronize Love Notes (cloud array is authoritative across all devices)
     if (Array.isArray(cloud.notes)) {
-        const notesMap = new Map();
-
-        // Add cloud notes (filtering out deleted ones)
-        cloud.notes.forEach(n => {
-            if (n && n.id && !deletedNoteIds.includes(n.id)) {
-                notesMap.set(n.id, n);
-            }
-        });
-
-        // Add local notes (preserving newly created local notes that haven't synced yet)
-        loveNotes.forEach(n => {
-            if (n && n.id && !deletedNoteIds.includes(n.id)) {
-                if (!notesMap.has(n.id)) {
-                    notesMap.set(n.id, n);
-                    changed = true;
-                }
-            }
-        });
-
-        const mergedNotes = Array.from(notesMap.values());
-        mergedNotes.sort((a, b) => (b.date || 0) - (a.date || 0));
-
-        if (JSON.stringify(mergedNotes) !== JSON.stringify(loveNotes)) {
-            loveNotes = mergedNotes;
+        if (JSON.stringify(cloud.notes) !== JSON.stringify(loveNotes)) {
+            loveNotes = cloud.notes;
+            migrateNoteDates(loveNotes);
             changed = true;
         }
     }
@@ -1451,13 +1428,8 @@ function renderLoveNotes() {
 }
 
 window.deleteLoveNote = function(id) {
-    let deletedNoteIds = [];
-    try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
-    if (!deletedNoteIds.includes(id)) {
-        deletedNoteIds.push(id);
-        localStorage.setItem("duo_deleted_notes", JSON.stringify(deletedNoteIds));
-    }
     loveNotes = loveNotes.filter(n => n.id !== id);
+    saveToLocalStorage();
     pushToCloud();
     renderLoveNotes();
     showToast("Notita eliminada 🗑️");
@@ -1465,15 +1437,8 @@ window.deleteLoveNote = function(id) {
 
 window.clearAllLoveNotes = function() {
     if (confirm("¿Estás seguro de que deseas eliminar todas las notitas actuales?")) {
-        loveNotes.forEach(n => {
-            let deletedNoteIds = [];
-            try { deletedNoteIds = JSON.parse(localStorage.getItem("duo_deleted_notes") || "[]"); } catch(e) {}
-            if (!deletedNoteIds.includes(n.id)) {
-                deletedNoteIds.push(n.id);
-                localStorage.setItem("duo_deleted_notes", JSON.stringify(deletedNoteIds));
-            }
-        });
         loveNotes = [];
+        saveToLocalStorage();
         pushToCloud();
         renderLoveNotes();
         showToast("Todas las notitas han sido eliminadas 🗑️");
