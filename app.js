@@ -392,6 +392,8 @@ function loadFromLocalStorage() {
     }
     migrateNoteDates(loveNotes);
 
+    try { localStorage.removeItem("duo_deleted_tasks"); } catch(e) {}
+
     const savedTasks = localStorage.getItem("duo_tasks");
     if (savedTasks) {
         try { duoTasks = JSON.parse(savedTasks); } catch(e) { duoTasks = JSON.parse(JSON.stringify(DEFAULT_TASKS)); }
@@ -463,31 +465,10 @@ function mergeCloudState(cloud) {
         }
     }
 
-    // 2. Merge Tasks (combine local + cloud by ID, filtering deleted ones)
-    let deletedTaskIds = [];
-    try { deletedTaskIds = JSON.parse(localStorage.getItem("duo_deleted_tasks") || "[]"); } catch(e) {}
-
+    // 2. Synchronize Tasks (cloud array is authoritative across all devices)
     if (Array.isArray(cloud.tasks)) {
-        const tasksMap = new Map();
-
-        cloud.tasks.forEach(t => {
-            if (t && t.id && !deletedTaskIds.includes(t.id)) {
-                tasksMap.set(t.id, t);
-            }
-        });
-
-        duoTasks.forEach(t => {
-            if (t && t.id && !deletedTaskIds.includes(t.id)) {
-                if (!tasksMap.has(t.id)) {
-                    tasksMap.set(t.id, t);
-                    changed = true;
-                }
-            }
-        });
-
-        const mergedTasks = Array.from(tasksMap.values());
-        if (JSON.stringify(mergedTasks) !== JSON.stringify(duoTasks)) {
-            duoTasks = mergedTasks;
+        if (JSON.stringify(cloud.tasks) !== JSON.stringify(duoTasks)) {
+            duoTasks = cloud.tasks;
             changed = true;
         }
     }
@@ -1361,13 +1342,8 @@ function showTaskCompletedModal() {
 }
 
 window.deleteTask = function(id, showNotice = true) {
-    let deletedTaskIds = [];
-    try { deletedTaskIds = JSON.parse(localStorage.getItem("duo_deleted_tasks") || "[]"); } catch(e) {}
-    if (!deletedTaskIds.includes(id)) {
-        deletedTaskIds.push(id);
-        localStorage.setItem("duo_deleted_tasks", JSON.stringify(deletedTaskIds));
-    }
     duoTasks = duoTasks.filter(t => t.id !== id);
+    saveToLocalStorage();
     pushToCloud();
     renderTasks();
     if (showNotice) showToast("Tarea eliminada");
