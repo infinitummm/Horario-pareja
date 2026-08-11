@@ -1766,7 +1766,7 @@ h1 {
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
 }
 
-.modal-overlay.open .task-completed-card {
+.modal-backdrop.open .task-completed-card {
     transform: scale(1);
     opacity: 1;
 }

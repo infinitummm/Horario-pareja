@@ -1294,21 +1294,17 @@ function renderTasks() {
         const check = document.createElement("div");
         check.className = "task-checkbox";
         if (task.completed) check.innerHTML = "✓";
-        check.addEventListener("click", () => {
-            if (!task.completed) {
-                // Mark completed and trigger 3-second pop-up animation
-                showTaskCompletedModal();
+        const completeTaskHandler = (e) => {
+            if (e) e.stopPropagation();
+            showTaskCompletedModal();
+            duoTasks = duoTasks.filter(t => t.id !== task.id);
+            pushToCloud();
+            renderTasks();
+        };
 
-                // Auto-delete task when completed
-                duoTasks = duoTasks.filter(t => t.id !== task.id);
-                pushToCloud();
-                renderTasks();
-            } else {
-                task.completed = false;
-                pushToCloud();
-                renderTasks();
-            }
-        });
+        check.addEventListener("click", completeTaskHandler);
+        content.style.cursor = "pointer";
+        content.addEventListener("click", completeTaskHandler);
 
         const content = document.createElement("div");
         content.className = "task-content";
@@ -1351,6 +1347,11 @@ function showTaskCompletedModal() {
 
     modal.classList.add("open");
     
+    modal.onclick = () => {
+        modal.classList.remove("open");
+        if (taskCompletedTimer) clearTimeout(taskCompletedTimer);
+    };
+
     if (taskCompletedTimer) clearTimeout(taskCompletedTimer);
     
     taskCompletedTimer = setTimeout(() => {
