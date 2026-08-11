@@ -10,15 +10,19 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          for (let r of regs) r.unregister();
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then(function(names) {
-          for (let n of names) caches.delete(n);
-        });
+      const CURRENT_APP_VERSION = "49.0";
+      if (localStorage.getItem("duo_app_v") !== CURRENT_APP_VERSION) {
+        localStorage.setItem("duo_app_v", CURRENT_APP_VERSION);
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            for (let r of regs) r.unregister();
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (let n of names) caches.delete(n);
+          });
+        }
       }
     </script>
     
@@ -570,6 +574,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=48.0"></script>
+    <script src="app.js?v=49.0"></script>
 </body>
 </html>

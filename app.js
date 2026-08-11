@@ -396,9 +396,13 @@ function loadFromLocalStorage() {
 
     const savedTasks = localStorage.getItem("duo_tasks");
     if (savedTasks) {
-        try { duoTasks = JSON.parse(savedTasks); } catch(e) { duoTasks = JSON.parse(JSON.stringify(DEFAULT_TASKS)); }
+        try { 
+            duoTasks = JSON.parse(savedTasks).filter(t => t && !t.completed); 
+        } catch(e) { 
+            duoTasks = JSON.parse(JSON.stringify(DEFAULT_TASKS)).filter(t => t && !t.completed); 
+        }
     } else {
-        duoTasks = JSON.parse(JSON.stringify(DEFAULT_TASKS));
+        duoTasks = JSON.parse(JSON.stringify(DEFAULT_TASKS)).filter(t => t && !t.completed);
     }
 
     const savedAttendance = localStorage.getItem("duo_attendance");
@@ -465,10 +469,11 @@ function mergeCloudState(cloud) {
         }
     }
 
-    // 2. Synchronize Tasks (cloud array is authoritative across all devices)
+    // 2. Synchronize Tasks (cloud array is authoritative across all devices, filtering any completed tasks)
     if (Array.isArray(cloud.tasks)) {
-        if (JSON.stringify(cloud.tasks) !== JSON.stringify(duoTasks)) {
-            duoTasks = cloud.tasks;
+        const cleanCloudTasks = cloud.tasks.filter(t => t && !t.completed);
+        if (JSON.stringify(cleanCloudTasks) !== JSON.stringify(duoTasks)) {
+            duoTasks = cleanCloudTasks;
             changed = true;
         }
     }
@@ -1260,7 +1265,11 @@ function renderTasks() {
     if (!tasksListContainer) return;
     tasksListContainer.innerHTML = "";
 
+    // Automatically purge any completed task remnants
+    duoTasks = duoTasks.filter(t => t && !t.completed);
+
     const filtered = duoTasks.filter(t => {
+        if (!t || t.completed) return false;
         if (currentTaskFilter === "all") return true;
         return t.assigned === currentTaskFilter;
     });
