@@ -1746,3 +1746,54 @@ h1 {
 .lock-screen-card.shake {
     animation: shakeError 0.4s ease;
 }
+
+/* TASK COMPLETED POPUP MODAL STYLES */
+.task-completed-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-main);
+    border-radius: 24px;
+    padding: 20px;
+    width: 88%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transform: scale(0.7);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+}
+
+.modal-overlay.open .task-completed-card {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.task-completed-img-container {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(56, 189, 248, 0.25);
+}
+
+.task-completed-img {
+    width: 100%;
+    height: auto;
+    max-height: 380px;
+    object-fit: contain;
+    display: block;
+}
+
+.task-completed-badge {
+    font-family: 'Fredoka', cursive, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: 0.3px;
+}

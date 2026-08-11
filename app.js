@@ -1295,9 +1295,19 @@ function renderTasks() {
         check.className = "task-checkbox";
         if (task.completed) check.innerHTML = "✓";
         check.addEventListener("click", () => {
-            task.completed = !task.completed;
-            pushToCloud();
-            renderTasks();
+            if (!task.completed) {
+                // Mark completed and trigger 3-second pop-up animation
+                showTaskCompletedModal();
+
+                // Auto-delete task when completed
+                duoTasks = duoTasks.filter(t => t.id !== task.id);
+                pushToCloud();
+                renderTasks();
+            } else {
+                task.completed = false;
+                pushToCloud();
+                renderTasks();
+            }
         });
 
         const content = document.createElement("div");
@@ -1331,6 +1341,21 @@ function renderTasks() {
 
         tasksListContainer.appendChild(card);
     });
+}
+
+let taskCompletedTimer = null;
+
+function showTaskCompletedModal() {
+    const modal = document.getElementById("modal-task-completed");
+    if (!modal) return;
+
+    modal.classList.add("open");
+    
+    if (taskCompletedTimer) clearTimeout(taskCompletedTimer);
+    
+    taskCompletedTimer = setTimeout(() => {
+        modal.classList.remove("open");
+    }, 3000);
 }
 
 window.deleteTask = function(id) {
@@ -1752,7 +1777,7 @@ function closeAllModals() {
     if (player) {
         player.pause();
     }
-    document.querySelectorAll(".modal-backdrop").forEach(m => m.classList.remove("open"));
+    document.querySelectorAll(".modal-backdrop, .modal-overlay").forEach(m => m.classList.remove("open"));
 }
 
 function getBlobIdFromUrl(url) {
