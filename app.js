@@ -463,26 +463,28 @@ function mergeCloudState(cloud) {
         }
     }
 
-    // 2. Merge Tasks (combine local + cloud by ID)
+    // 2. Merge Tasks (combine local + cloud by ID, filtering deleted ones)
+    let deletedTaskIds = [];
+    try { deletedTaskIds = JSON.parse(localStorage.getItem("duo_deleted_tasks") || "[]"); } catch(e) {}
+
     if (Array.isArray(cloud.tasks)) {
         const tasksMap = new Map();
+
         cloud.tasks.forEach(t => {
-            if (t && t.id) tasksMap.set(t.id, t);
+            if (t && t.id && !deletedTaskIds.includes(t.id)) {
+                tasksMap.set(t.id, t);
+            }
         });
+
         duoTasks.forEach(t => {
-            if (t && t.id) {
+            if (t && t.id && !deletedTaskIds.includes(t.id)) {
                 if (!tasksMap.has(t.id)) {
                     tasksMap.set(t.id, t);
                     changed = true;
-                } else {
-                    const cloudT = tasksMap.get(t.id);
-                    if (t.completed && !cloudT.completed) {
-                        cloudT.completed = true;
-                        changed = true;
-                    }
                 }
             }
         });
+
         const mergedTasks = Array.from(tasksMap.values());
         if (JSON.stringify(mergedTasks) !== JSON.stringify(duoTasks)) {
             duoTasks = mergedTasks;
@@ -1294,17 +1296,6 @@ function renderTasks() {
         const check = document.createElement("div");
         check.className = "task-checkbox";
         if (task.completed) check.innerHTML = "✓";
-        const completeTaskHandler = (e) => {
-            if (e) e.stopPropagation();
-            showTaskCompletedModal();
-            duoTasks = duoTasks.filter(t => t.id !== task.id);
-            pushToCloud();
-            renderTasks();
-        };
-
-        check.addEventListener("click", completeTaskHandler);
-        content.style.cursor = "pointer";
-        content.addEventListener("click", completeTaskHandler);
 
         const content = document.createElement("div");
         content.className = "task-content";
@@ -1322,13 +1313,23 @@ function renderTasks() {
         content.appendChild(title);
         content.appendChild(meta);
 
+        const completeTaskHandler = (e) => {
+            if (e) e.stopPropagation();
+            showTaskCompletedModal();
+            deleteTask(task.id, false);
+        };
+
+        check.addEventListener("click", completeTaskHandler);
+        content.style.cursor = "pointer";
+        content.addEventListener("click", completeTaskHandler);
+
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "btn-delete-task";
         deleteBtn.innerHTML = "🗑️";
         deleteBtn.title = "Eliminar tarea";
         deleteBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            deleteTask(task.id);
+            deleteTask(task.id, true);
         });
 
         card.appendChild(check);
@@ -1359,11 +1360,17 @@ function showTaskCompletedModal() {
     }, 3000);
 }
 
-window.deleteTask = function(id) {
+window.deleteTask = function(id, showNotice = true) {
+    let deletedTaskIds = [];
+    try { deletedTaskIds = JSON.parse(localStorage.getItem("duo_deleted_tasks") || "[]"); } catch(e) {}
+    if (!deletedTaskIds.includes(id)) {
+        deletedTaskIds.push(id);
+        localStorage.setItem("duo_deleted_tasks", JSON.stringify(deletedTaskIds));
+    }
     duoTasks = duoTasks.filter(t => t.id !== id);
     pushToCloud();
     renderTasks();
-    showToast("Tarea eliminada");
+    if (showNotice) showToast("Tarea eliminada");
 };
 
 // Dual Attendance Tracker Logic
