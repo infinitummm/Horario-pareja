@@ -247,6 +247,8 @@ function applyUserSessionDefaults(userKey) {
     renderAttendance();
 }
 
+const SESSION_AUTH_VERSION = "v56_auth_clean_session";
+
 function setupUserSessionSecurity() {
     const lockOverlay = document.getElementById("lock-screen-overlay");
     const lockForm = document.getElementById("lock-pin-form");
@@ -255,6 +257,12 @@ function setupUserSessionSecurity() {
     const lockCard = document.querySelector(".lock-screen-card");
     const lockAppBtn = document.getElementById("btn-lock-app");
     const userButtons = document.querySelectorAll(".login-user-btn");
+
+    // Force close all previous sessions across all devices for testing
+    if (localStorage.getItem("duo_auth_version") !== SESSION_AUTH_VERSION) {
+        localStorage.removeItem("horario_duo_unlocked");
+        localStorage.setItem("duo_auth_version", SESSION_AUTH_VERSION);
+    }
 
     let selectedLoginUser = currentActiveUser || "he";
 
