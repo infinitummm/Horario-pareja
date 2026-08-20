@@ -148,7 +148,7 @@ async function fetchMasterSyncRegistry() {
 
 // Initialize Application
 document.addEventListener("DOMContentLoaded", async () => {
-    setupPinLockSecurity();
+    setupUserSessionSecurity();
     checkUrlSyncParams();
     await fetchMasterSyncRegistry();
     registerServiceWorker();
@@ -178,46 +178,128 @@ document.addEventListener("DOMContentLoaded", async () => {
     setInterval(renderCurrentTimeIndicator, 60000);
 });
 
-const APP_SECRET_PIN_HASH = "755917ecbc61091ffa6b605d7f82bdaa4e4cbdc309124807b0fb63228d0696df";
+const APP_USERS = {
+    he: {
+        id: "he",
+        name: "Javi",
+        avatar: "👦",
+        themeColor: "sky",
+        passHash: "755917ecbc61091ffa6b605d7f82bdaa4e4cbdc309124807b0fb63228d0696df"
+    },
+    she: {
+        id: "she",
+        name: "Mari",
+        avatar: "🌸",
+        themeColor: "pink",
+        passHash: "c2aab9d664fe1c0de638fcef89728618e4ccf55d5f9f00e68eace57aaab0063e"
+    }
+};
 
-async function hashPin(pin) {
+let currentActiveUser = localStorage.getItem("duo_active_user") || "he";
+if (!APP_USERS[currentActiveUser]) currentActiveUser = "he";
+
+async function hashPassword(str) {
     const encoder = new TextEncoder();
-    const data = encoder.encode(pin);
+    const data = encoder.encode(str);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function setupPinLockSecurity() {
+function updateUserProfileChip() {
+    const user = APP_USERS[currentActiveUser] || APP_USERS.he;
+    const avatarEl = document.getElementById("chip-avatar-icon");
+    const nameEl = document.getElementById("chip-username-text");
+    if (avatarEl) avatarEl.textContent = user.avatar;
+    if (nameEl) nameEl.textContent = user.name;
+}
+
+function applyUserSessionDefaults(userKey) {
+    currentActiveUser = userKey;
+    localStorage.setItem("duo_active_user", userKey);
+    updateUserProfileChip();
+
+    // 1. Schedule default subtab
+    currentScheduleView = userKey; // 'he' or 'she'
+    document.querySelectorAll(".subtab-btn").forEach(btn => {
+        if (btn.dataset.schedule === userKey) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+    renderCurrentSchedule();
+
+    // 2. Attendance owner default
+    currentAttendanceOwner = userKey;
+    document.querySelectorAll(".attendance-owner-btn").forEach(btn => {
+        if (btn.dataset.owner === userKey) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+    renderAttendance();
+}
+
+function setupUserSessionSecurity() {
     const lockOverlay = document.getElementById("lock-screen-overlay");
     const lockForm = document.getElementById("lock-pin-form");
     const pinInput = document.getElementById("pin-input-field");
     const errorMsg = document.getElementById("pin-error-msg");
     const lockCard = document.querySelector(".lock-screen-card");
     const lockAppBtn = document.getElementById("btn-lock-app");
+    const userButtons = document.querySelectorAll(".login-user-btn");
+
+    let selectedLoginUser = currentActiveUser || "he";
+
+    // Setup User Switching in Login Card
+    userButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            userButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            selectedLoginUser = btn.dataset.user;
+            if (errorMsg) errorMsg.style.display = "none";
+            pinInput.value = "";
+            pinInput.focus();
+        });
+    });
 
     if (!lockOverlay || !lockForm || !pinInput) return;
 
     const isUnlocked = localStorage.getItem("horario_duo_unlocked") === "true";
     if (isUnlocked) {
         lockOverlay.classList.add("unlocked");
+        applyUserSessionDefaults(currentActiveUser);
     } else {
         lockOverlay.classList.remove("unlocked");
+        // Preselect current active user tab
+        userButtons.forEach(b => {
+            if (b.dataset.user === selectedLoginUser) b.classList.add("active");
+            else b.classList.remove("active");
+        });
         setTimeout(() => pinInput.focus(), 300);
     }
 
     lockForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const enteredPin = pinInput.value.trim();
-        const enteredHash = await hashPin(enteredPin);
+        const enteredPass = pinInput.value.trim();
+        if (!enteredPass) return;
 
-        if (enteredHash === APP_SECRET_PIN_HASH) {
+        const enteredHash = await hashPassword(enteredPass);
+        const targetUser = APP_USERS[selectedLoginUser];
+
+        if (targetUser && enteredHash === targetUser.passHash) {
             localStorage.setItem("horario_duo_unlocked", "true");
+            applyUserSessionDefaults(selectedLoginUser);
             lockOverlay.classList.add("unlocked");
             if (errorMsg) errorMsg.style.display = "none";
-            showToast("¡Bienvenido a Horario Duo, Javi & Mari! 🔓");
+            showToast(`¡Bienvenido(a), ${targetUser.name}! ${targetUser.avatar}`);
         } else {
-            if (errorMsg) errorMsg.style.display = "block";
+            if (errorMsg) {
+                errorMsg.textContent = "🔒 Contraseña incorrecta. Intenta de nuevo.";
+                errorMsg.style.display = "block";
+            }
             pinInput.value = "";
             pinInput.focus();
 
@@ -229,12 +311,6 @@ function setupPinLockSecurity() {
         }
     });
 
-    pinInput.addEventListener("input", () => {
-        if (pinInput.value.length === 4) {
-            lockForm.dispatchEvent(new Event("submit"));
-        }
-    });
-
     if (lockAppBtn) {
         lockAppBtn.addEventListener("click", () => {
             localStorage.removeItem("horario_duo_unlocked");
@@ -242,7 +318,7 @@ function setupPinLockSecurity() {
             pinInput.value = "";
             if (errorMsg) errorMsg.style.display = "none";
             setTimeout(() => pinInput.focus(), 300);
-            showToast("Aplicación bloqueada 🔒");
+            showToast("Sesión cerrada 🔒");
         });
     }
 }
@@ -1546,8 +1622,9 @@ function setupEventListeners() {
     }
 
     document.getElementById("btn-new-task").addEventListener("click", () => {
-        const assignedVal = taskAssignedSelect ? taskAssignedSelect.value : "both";
-        updateTaskSubjectDropdown(assignedVal);
+        const defaultUser = currentActiveUser || "he";
+        if (taskAssignedSelect) taskAssignedSelect.value = defaultUser;
+        updateTaskSubjectDropdown(defaultUser);
         document.getElementById("modal-task-form").classList.add("open");
     });
 
@@ -1585,6 +1662,8 @@ function setupEventListeners() {
 
     // Love Note modal
     document.getElementById("btn-add-love-note").addEventListener("click", () => {
+        const senderSelect = document.getElementById("note-sender");
+        if (senderSelect) senderSelect.value = currentActiveUser || "he";
         document.getElementById("modal-love-note").classList.add("open");
     });
 

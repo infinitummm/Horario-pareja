@@ -1711,23 +1711,126 @@ h1 {
     margin-top: 6px;
 }
 
+.sidebar-user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-main);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar-user-chip .chip-avatar {
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-app);
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+}
+
+.sidebar-user-chip .chip-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-user-chip .chip-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.sidebar-user-chip .chip-username {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.login-user-switcher {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 8px;
+}
+
+.login-user-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 2px solid var(--border-main);
+    background: var(--bg-app);
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-user-btn .user-btn-avatar {
+    font-size: 18px;
+}
+
+.login-user-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.login-user-btn.active {
+    background: linear-gradient(135deg, var(--accent), #f43f5e);
+    border-color: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(244, 63, 94, 0.3);
+}
+
+.login-user-btn[data-user="he"].active {
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    border-color: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.3);
+}
+
+.login-user-btn[data-user="she"].active {
+    background: linear-gradient(135deg, #db2777, #f472b6);
+    border-color: #db2777;
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(219, 39, 119, 0.3);
+}
+
 .pin-input-group {
     margin: 12px 0 4px 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }
 
 #pin-input-field {
-    width: 160px;
+    width: 100%;
+    max-width: 260px;
     height: 48px;
     text-align: center;
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
     border-radius: 14px;
     border: 2px solid var(--border-main);
     background: var(--bg-app);
     color: var(--text-main);
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    padding: 0 16px;
 }
 
 #pin-input-field:focus {

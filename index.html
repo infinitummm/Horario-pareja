@@ -40,7 +40,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=52.0">
+    <link rel="stylesheet" href="style.css?v=53.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -89,8 +89,16 @@
                 </div>
             </nav>
 
+            <div class="sidebar-user-chip" id="sidebar-user-chip">
+                <span class="chip-avatar" id="chip-avatar-icon">👦</span>
+                <div class="chip-info">
+                    <span class="chip-label">Sesión iniciada</span>
+                    <span class="chip-username" id="chip-username-text">Javi</span>
+                </div>
+            </div>
+
             <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 8px;">
-                <button id="btn-lock-app" class="btn btn-outline btn-sm">🔒 Bloquear App</button>
+                <button id="btn-lock-app" class="btn btn-outline btn-sm">🚪 Cerrar Sesión</button>
                 <button id="btn-reset-all" class="btn btn-outline btn-sm warning-text">Reiniciar Datos</button>
             </div>
         </aside>
@@ -505,7 +513,7 @@
         </div>
     </div>
 
-    <!-- LOCK SCREEN OVERLAY (PIN SECURITY 1505) -->
+    <!-- LOCK & LOGIN SCREEN OVERLAY -->
     <div id="lock-screen-overlay" class="lock-screen-overlay">
         <div class="lock-screen-card">
             <div class="lock-icon-wrapper">
@@ -513,16 +521,28 @@
             </div>
             <div class="lock-title">Horario Duo 💕</div>
             <div class="lock-subtitle">Espacio Privado de Javi & Mari</div>
-            <p class="lock-prompt">Ingresa el PIN de 4 dígitos para acceder:</p>
+            <p class="lock-prompt">¿Quién está ingresando hoy?</p>
             
             <form id="lock-pin-form">
-                <div class="pin-input-group">
-                    <input type="password" id="pin-input-field" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" required autocomplete="off">
+                <!-- User Selector Tabs -->
+                <div class="login-user-switcher">
+                    <button type="button" class="login-user-btn active" data-user="he" id="login-btn-he">
+                        <span class="user-btn-avatar">👦</span>
+                        <span class="user-btn-name">Javi</span>
+                    </button>
+                    <button type="button" class="login-user-btn" data-user="she" id="login-btn-she">
+                        <span class="user-btn-avatar">🌸</span>
+                        <span class="user-btn-name">Mari</span>
+                    </button>
                 </div>
-                <div id="pin-error-msg" class="pin-error-text" style="display: none;">🔒 PIN incorrecto. Intenta de nuevo.</div>
-                <button type="submit" class="btn btn-primary btn-lock-submit">Acceder 🔓</button>
+
+                <div class="pin-input-group">
+                    <input type="password" id="pin-input-field" placeholder="Ingresa tu contraseña" required autocomplete="current-password">
+                </div>
+                <div id="pin-error-msg" class="pin-error-text" style="display: none;">🔒 Contraseña incorrecta. Intenta de nuevo.</div>
+                <button type="submit" class="btn btn-primary btn-lock-submit" id="btn-login-submit">Entrar al Espacio ✨</button>
             </form>
-            <div class="lock-footer-tag">Acceso privado para la pareja ✨</div>
+            <div class="lock-footer-tag">Tu sesión se guardará en este dispositivo 📱</div>
         </div>
     </div>
 
@@ -582,6 +602,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=52.0"></script>
+    <script src="app.js?v=53.0"></script>
 </body>
 </html>
