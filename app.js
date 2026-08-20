@@ -212,6 +212,11 @@ function updateUserProfileChip() {
     const nameEl = document.getElementById("chip-username-text");
     if (avatarEl) avatarEl.textContent = user.avatar;
     if (nameEl) nameEl.textContent = user.name;
+
+    const settingsAvatarEl = document.getElementById("settings-avatar-icon");
+    const settingsNameEl = document.getElementById("settings-username-text");
+    if (settingsAvatarEl) settingsAvatarEl.textContent = user.avatar;
+    if (settingsNameEl) settingsNameEl.textContent = user.name;
 }
 
 function applyUserSessionDefaults(userKey) {
@@ -342,8 +347,14 @@ function setTheme(themeName) {
     document.body.className = `theme-${themeName}`;
     localStorage.setItem("duo_theme", themeName);
 
-    // Update active state in theme buttons
+    // Update active state in sidebar theme buttons
     document.querySelectorAll(".btn-theme-select").forEach(btn => {
+        if (btn.dataset.theme === themeName) btn.classList.add("active");
+        else btn.classList.remove("active");
+    });
+
+    // Update active state in settings tab theme options
+    document.querySelectorAll(".settings-theme-option").forEach(btn => {
         if (btn.dataset.theme === themeName) btn.classList.add("active");
         else btn.classList.remove("active");
     });
@@ -354,6 +365,10 @@ function setTheme(themeName) {
 
 function setupThemeSwitchers() {
     document.querySelectorAll(".btn-theme-select").forEach(btn => {
+        btn.addEventListener("click", () => setTheme(btn.dataset.theme));
+    });
+
+    document.querySelectorAll(".settings-theme-option").forEach(btn => {
         btn.addEventListener("click", () => setTheme(btn.dataset.theme));
     });
 
@@ -1713,7 +1728,7 @@ function setupEventListeners() {
     document.querySelectorAll(".btn-close-modal").forEach(btn => btn.addEventListener("click", closeAllModals));
     
     // Reset Data
-    document.getElementById("btn-reset-all").addEventListener("click", () => {
+    const handleResetAllData = () => {
         if (confirm("¿Restablecer los datos predeterminados de la app de pareja?")) {
             localStorage.clear();
             loadFromLocalStorage();
@@ -1723,7 +1738,43 @@ function setupEventListeners() {
             renderLoveNotes();
             showToast("Datos restablecidos");
         }
-    });
+    };
+
+    const btnResetAll = document.getElementById("btn-reset-all");
+    if (btnResetAll) btnResetAll.addEventListener("click", handleResetAllData);
+
+    const btnResetAllSettings = document.getElementById("btn-reset-all-settings");
+    if (btnResetAllSettings) btnResetAllSettings.addEventListener("click", handleResetAllData);
+
+    // Settings Tab Listeners
+    const btnLogoutSettings = document.getElementById("btn-logout-settings");
+    if (btnLogoutSettings) {
+        btnLogoutSettings.addEventListener("click", () => {
+            localStorage.removeItem("horario_duo_unlocked");
+            const lockOverlay = document.getElementById("lock-screen-overlay");
+            if (lockOverlay) lockOverlay.classList.remove("unlocked");
+            const pinInput = document.getElementById("pin-input-field");
+            if (pinInput) {
+                pinInput.value = "";
+                setTimeout(() => pinInput.focus(), 300);
+            }
+            showToast("Sesión cerrada");
+        });
+    }
+
+    const btnSyncSettingsNow = document.getElementById("btn-sync-settings-now");
+    if (btnSyncSettingsNow) {
+        btnSyncSettingsNow.addEventListener("click", () => {
+            showToast("Sincronizando con la nube...");
+            initFirebaseSyncWithRetry();
+            pushToCloud();
+        });
+    }
+
+    const btnOpenSyncModalSettings = document.getElementById("btn-open-sync-modal-settings");
+    if (btnOpenSyncModalSettings) {
+        btnOpenSyncModalSettings.addEventListener("click", openSyncSettingsModal);
+    }
 }
 
 function openDetailsModal(classObj, session) {
@@ -2002,13 +2053,24 @@ function setupSyncPin() {
 
 function updateSyncBadge(isOnline) {
     const badge = document.getElementById("sync-status-badge");
-    if (!badge) return;
-    if (isOnline !== false) {
-        badge.className = "sync-badge online";
-        badge.textContent = "🟢 Sincronizado en Vivo";
-    } else {
-        badge.className = "sync-badge offline";
-        badge.textContent = "⚪ Modo Local";
+    const settingsBadge = document.getElementById("settings-sync-badge");
+    if (badge) {
+        if (isOnline !== false) {
+            badge.className = "sync-badge online";
+            badge.textContent = "Sincronizado en Vivo";
+        } else {
+            badge.className = "sync-badge offline";
+            badge.textContent = "Modo Local";
+        }
+    }
+    if (settingsBadge) {
+        if (isOnline !== false) {
+            settingsBadge.className = "settings-sync-pill online";
+            settingsBadge.textContent = "Sincronizado en Vivo";
+        } else {
+            settingsBadge.className = "settings-sync-pill offline";
+            settingsBadge.textContent = "Modo Local";
+        }
     }
 }
 
