@@ -40,7 +40,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=39.0">
+    <link rel="stylesheet" href="style.css?v=52.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -382,9 +382,16 @@
                         </select>
                     </div>
 
+                    <div class="form-group" id="group-task-subject">
+                        <label for="form-task-subject">Materia / Asignatura</label>
+                        <select id="form-task-subject">
+                            <option value="">General / Sin materia asignada</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="form-task-name">Título de la Tarea *</label>
-                        <input type="text" id="form-task-name" required placeholder="Ej: Comprar boletos de cine / Estudiar cálculo">
+                        <input type="text" id="form-task-name" required placeholder="Ej: Taller de cálculo / Estudiar para parcial">
                     </div>
 
                     <div class="form-row-2">
@@ -575,6 +582,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=51.0"></script>
+    <script src="app.js?v=52.0"></script>
 </body>
 </html>

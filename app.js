@@ -1288,7 +1288,14 @@ function renderTasks() {
         meta.className = "task-meta";
         const ownerName = task.assigned === "he" ? "Javi" : (task.assigned === "she" ? "Mari" : "Ambos");
         const priorityBadge = task.priority === "high" ? "🔴 Importante" : "💙 Normal";
-        meta.innerHTML = `<span>Asignado: ${ownerName}</span> <span>•</span> <span>${priorityBadge}</span> <span>•</span> <span>Entrega: ${task.dueDate || 'Sin fecha'}</span>`;
+        
+        let subjectBadgeHtml = "";
+        if (task.subjectName) {
+            const colorClass = task.subjectColor ? `badge-${task.subjectColor}` : (task.assigned === "she" ? "badge-pink" : "badge-sky");
+            subjectBadgeHtml = `<span class="task-subject-tag ${colorClass}">📚 ${task.subjectName}</span> <span>•</span> `;
+        }
+
+        meta.innerHTML = `${subjectBadgeHtml}<span>Asignado: ${ownerName}</span> <span>•</span> <span>${priorityBadge}</span> <span>•</span> <span>Entrega: ${task.dueDate || 'Sin fecha'}</span>`;
 
         content.appendChild(title);
         content.appendChild(meta);
@@ -1467,8 +1474,80 @@ function setupEventListeners() {
         });
     });
 
+    function updateTaskSubjectDropdown(assignedOwner, selectedSubjectId = "") {
+        const subjectSelect = document.getElementById("form-task-subject");
+        if (!subjectSelect) return;
+
+        subjectSelect.innerHTML = "";
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "General / Sin materia asignada";
+        subjectSelect.appendChild(defaultOption);
+
+        if (assignedOwner === "he") {
+            HE_CLASSES.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id;
+                opt.dataset.name = c.name;
+                opt.dataset.color = c.color || "sky";
+                opt.textContent = `📘 ${c.name}`;
+                if (c.id === selectedSubjectId) opt.selected = true;
+                subjectSelect.appendChild(opt);
+            });
+        } else if (assignedOwner === "she") {
+            SHE_CLASSES.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id;
+                opt.dataset.name = c.name;
+                opt.dataset.color = c.color || "pink";
+                opt.textContent = `🌸 ${c.name}`;
+                if (c.id === selectedSubjectId) opt.selected = true;
+                subjectSelect.appendChild(opt);
+            });
+        } else if (assignedOwner === "both") {
+            if (HE_CLASSES.length > 0) {
+                const groupHe = document.createElement("optgroup");
+                groupHe.label = "Materias de Javi";
+                HE_CLASSES.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c.id;
+                    opt.dataset.name = c.name;
+                    opt.dataset.color = c.color || "sky";
+                    opt.textContent = `📘 ${c.name}`;
+                    if (c.id === selectedSubjectId) opt.selected = true;
+                    groupHe.appendChild(opt);
+                });
+                subjectSelect.appendChild(groupHe);
+            }
+            if (SHE_CLASSES.length > 0) {
+                const groupShe = document.createElement("optgroup");
+                groupShe.label = "Materias de Mari";
+                SHE_CLASSES.forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c.id;
+                    opt.dataset.name = c.name;
+                    opt.dataset.color = c.color || "pink";
+                    opt.textContent = `🌸 ${c.name}`;
+                    if (c.id === selectedSubjectId) opt.selected = true;
+                    groupShe.appendChild(opt);
+                });
+                subjectSelect.appendChild(groupShe);
+            }
+        }
+    }
+
     // Task modal
+    const taskAssignedSelect = document.getElementById("form-task-assigned");
+    if (taskAssignedSelect) {
+        taskAssignedSelect.addEventListener("change", (e) => {
+            updateTaskSubjectDropdown(e.target.value);
+        });
+    }
+
     document.getElementById("btn-new-task").addEventListener("click", () => {
+        const assignedVal = taskAssignedSelect ? taskAssignedSelect.value : "both";
+        updateTaskSubjectDropdown(assignedVal);
         document.getElementById("modal-task-form").classList.add("open");
     });
 
@@ -1479,9 +1558,25 @@ function setupEventListeners() {
         const dueDate = document.getElementById("form-task-date").value;
         const priority = document.getElementById("form-task-priority").value;
 
+        const subjectSelect = document.getElementById("form-task-subject");
+        const selectedOption = subjectSelect ? subjectSelect.options[subjectSelect.selectedIndex] : null;
+        const subjectId = subjectSelect ? subjectSelect.value : "";
+        const subjectName = (subjectId && selectedOption) ? (selectedOption.dataset.name || selectedOption.textContent.replace(/^[📘🌸]\s*/, '')) : "";
+        const subjectColor = (subjectId && selectedOption) ? (selectedOption.dataset.color || "") : "";
+
         if (!name) return;
 
-        duoTasks.push({ id: `task-${Date.now()}`, assigned, name, dueDate, priority, completed: false });
+        duoTasks.push({ 
+            id: `task-${Date.now()}`, 
+            assigned, 
+            subjectId,
+            subjectName,
+            subjectColor,
+            name, 
+            dueDate, 
+            priority, 
+            completed: false 
+        });
         pushToCloud();
         renderTasks();
         closeAllModals();
