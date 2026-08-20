@@ -182,14 +182,14 @@ const APP_USERS = {
     he: {
         id: "he",
         name: "Javi",
-        avatar: "👦",
+        avatar: "J",
         themeColor: "sky",
         passHash: "755917ecbc61091ffa6b605d7f82bdaa4e4cbdc309124807b0fb63228d0696df"
     },
     she: {
         id: "she",
         name: "Mari",
-        avatar: "🌸",
+        avatar: "M",
         themeColor: "pink",
         passHash: "c2aab9d664fe1c0de638fcef89728618e4ccf55d5f9f00e68eace57aaab0063e"
     }
@@ -294,10 +294,10 @@ function setupUserSessionSecurity() {
             applyUserSessionDefaults(selectedLoginUser);
             lockOverlay.classList.add("unlocked");
             if (errorMsg) errorMsg.style.display = "none";
-            showToast(`¡Bienvenido(a), ${targetUser.name}! ${targetUser.avatar}`);
+            showToast(`¡Bienvenido(a), ${targetUser.name}!`);
         } else {
             if (errorMsg) {
-                errorMsg.textContent = "🔒 Contraseña incorrecta. Intenta de nuevo.";
+                errorMsg.textContent = "Contraseña incorrecta. Intenta de nuevo.";
                 errorMsg.style.display = "block";
             }
             pinInput.value = "";
@@ -318,7 +318,7 @@ function setupUserSessionSecurity() {
             pinInput.value = "";
             if (errorMsg) errorMsg.style.display = "none";
             setTimeout(() => pinInput.focus(), 300);
-            showToast("Sesión cerrada 🔒");
+            showToast("Sesión cerrada");
         });
     }
 }
@@ -1363,12 +1363,12 @@ function renderTasks() {
         const meta = document.createElement("div");
         meta.className = "task-meta";
         const ownerName = task.assigned === "he" ? "Javi" : (task.assigned === "she" ? "Mari" : "Ambos");
-        const priorityBadge = task.priority === "high" ? "🔴 Importante" : "💙 Normal";
+        const priorityBadge = task.priority === "high" ? "Importante" : "Normal";
         
         let subjectBadgeHtml = "";
         if (task.subjectName) {
             const colorClass = task.subjectColor ? `badge-${task.subjectColor}` : (task.assigned === "she" ? "badge-pink" : "badge-sky");
-            subjectBadgeHtml = `<span class="task-subject-tag ${colorClass}">📚 ${task.subjectName}</span> <span>•</span> `;
+            subjectBadgeHtml = `<span class="task-subject-tag ${colorClass}">${task.subjectName}</span> <span>•</span> `;
         }
 
         meta.innerHTML = `${subjectBadgeHtml}<span>Asignado: ${ownerName}</span> <span>•</span> <span>${priorityBadge}</span> <span>•</span> <span>Entrega: ${task.dueDate || 'Sin fecha'}</span>`;
@@ -1567,7 +1567,7 @@ function setupEventListeners() {
                 opt.value = c.id;
                 opt.dataset.name = c.name;
                 opt.dataset.color = c.color || "sky";
-                opt.textContent = `📘 ${c.name}`;
+                opt.textContent = c.name;
                 if (c.id === selectedSubjectId) opt.selected = true;
                 subjectSelect.appendChild(opt);
             });
@@ -1577,7 +1577,7 @@ function setupEventListeners() {
                 opt.value = c.id;
                 opt.dataset.name = c.name;
                 opt.dataset.color = c.color || "pink";
-                opt.textContent = `🌸 ${c.name}`;
+                opt.textContent = c.name;
                 if (c.id === selectedSubjectId) opt.selected = true;
                 subjectSelect.appendChild(opt);
             });
@@ -1590,7 +1590,7 @@ function setupEventListeners() {
                     opt.value = c.id;
                     opt.dataset.name = c.name;
                     opt.dataset.color = c.color || "sky";
-                    opt.textContent = `📘 ${c.name}`;
+                    opt.textContent = c.name;
                     if (c.id === selectedSubjectId) opt.selected = true;
                     groupHe.appendChild(opt);
                 });
@@ -1604,7 +1604,7 @@ function setupEventListeners() {
                     opt.value = c.id;
                     opt.dataset.name = c.name;
                     opt.dataset.color = c.color || "pink";
-                    opt.textContent = `🌸 ${c.name}`;
+                    opt.textContent = c.name;
                     if (c.id === selectedSubjectId) opt.selected = true;
                     groupShe.appendChild(opt);
                 });
