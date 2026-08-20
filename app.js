@@ -366,9 +366,6 @@ function setTheme(themeName) {
         if (btn.dataset.theme === themeName) btn.classList.add("active");
         else btn.classList.remove("active");
     });
-
-    const mobileSelect = document.getElementById("select-theme-mobile");
-    if (mobileSelect) mobileSelect.value = themeName;
 }
 
 function setupThemeSwitchers() {
@@ -379,11 +376,6 @@ function setupThemeSwitchers() {
     document.querySelectorAll(".settings-theme-option").forEach(btn => {
         btn.addEventListener("click", () => setTheme(btn.dataset.theme));
     });
-
-    const mobileSelect = document.getElementById("select-theme-mobile");
-    if (mobileSelect) {
-        mobileSelect.addEventListener("change", (e) => setTheme(e.target.value));
-    }
 }
 
 // Fetch helper with AbortController timeout
@@ -1778,11 +1770,6 @@ function setupEventListeners() {
             pushToCloud();
         });
     }
-
-    const btnOpenSyncModalSettings = document.getElementById("btn-open-sync-modal-settings");
-    if (btnOpenSyncModalSettings) {
-        btnOpenSyncModalSettings.addEventListener("click", openSyncSettingsModal);
-    }
 }
 
 function openDetailsModal(classObj, session) {
@@ -1984,77 +1971,15 @@ function closeAllModals() {
     document.querySelectorAll(".modal-backdrop, .modal-overlay").forEach(m => m.classList.remove("open"));
 }
 
-function getBlobIdFromUrl(url) {
-    if (!url) return "";
-    const parts = url.split("/");
-    return parts[parts.length - 1];
-}
-
-function openSyncSettingsModal() {
-    const modal = document.getElementById("modal-sync-settings");
-    if (!modal) return;
-    const currentBlobId = getBlobIdFromUrl(CLOUD_SYNC_URL);
-    const shareUrl = `${window.location.origin}${window.location.pathname}?sync=${currentBlobId}`;
-
-    const shareInput = document.getElementById("sync-share-url-input");
-    if (shareInput) shareInput.value = shareUrl;
-
-    const customIdInput = document.getElementById("sync-custom-id-input");
-    if (customIdInput) customIdInput.value = currentBlobId;
-
-    modal.classList.add("open");
-}
-
 function setupSyncPin() {
     const badge = document.getElementById("sync-status-badge");
     if (badge) {
         badge.style.cursor = "pointer";
-        badge.title = "Toca para abrir la Configuración de Sincronización de Pareja";
-        badge.addEventListener("click", openSyncSettingsModal);
-    }
-
-    const copyBtn = document.getElementById("btn-copy-sync-link");
-    const connectBtn = document.getElementById("btn-connect-sync-id");
-    const forceSyncBtn = document.getElementById("btn-force-sync-now");
-
-    if (copyBtn) {
-        copyBtn.addEventListener("click", () => {
-            const shareInput = document.getElementById("sync-share-url-input");
-            if (shareInput) {
-                navigator.clipboard.writeText(shareInput.value).then(() => {
-                    showToast("¡Enlace copiado! Pásalo a tu pareja 💖");
-                }).catch(() => {
-                    shareInput.select();
-                    document.execCommand("copy");
-                    showToast("¡Enlace copiado! 💖");
-                });
-            }
-        });
-    }
-
-    if (connectBtn) {
-        connectBtn.addEventListener("click", () => {
-            const customIdInput = document.getElementById("sync-custom-id-input");
-            const rawVal = customIdInput ? customIdInput.value.trim() : "";
-            if (!rawVal) return;
-            let targetUrl = rawVal;
-            if (!targetUrl.startsWith("http")) {
-                targetUrl = `https://jsonblob.com/api/jsonBlob/${rawVal}`;
-            }
-            CLOUD_SYNC_URL = targetUrl;
-            localStorage.setItem("duo_cloud_url", CLOUD_SYNC_URL);
-            showToast("🔗 Conectando a nuevo espacio...");
-            pullFromCloud();
-            closeAllModals();
-        });
-    }
-
-    if (forceSyncBtn) {
-        forceSyncBtn.addEventListener("click", () => {
-            showToast("🔄 Conectando y sincronizando con Firebase...");
+        badge.title = "Toca para sincronizar en tiempo real con Firebase";
+        badge.addEventListener("click", () => {
+            showToast("Sincronizando con la nube...");
             initFirebaseSyncWithRetry();
             pushToCloud();
-            closeAllModals();
         });
     }
 }

@@ -10,7 +10,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-      const CURRENT_APP_VERSION = "49.0";
+      const CURRENT_APP_VERSION = "57.0";
       if (localStorage.getItem("duo_app_v") !== CURRENT_APP_VERSION) {
         localStorage.setItem("duo_app_v", CURRENT_APP_VERSION);
         if ('serviceWorker' in navigator) {
@@ -124,15 +124,6 @@
                 <!-- Top Right Chiikawa Avatar Button (Surprise Easter Egg) -->
                 <div class="header-chiikawa-avatar btn-chiikawa-dance-trigger" title="Chiikawa">
                     <img src="chiikawa.png" alt="Chiikawa Trio">
-                </div>
-
-                <!-- Quick Theme selector for mobile header -->
-                <div class="header-controls-mobile">
-                    <select id="select-theme-mobile" class="mobile-theme-dropdown">
-                        <option value="pink">Rosa Chiikawa</option>
-                        <option value="white">Blanco Limpio</option>
-                        <option value="dark">Oscuro OLED</option>
-                    </select>
                 </div>
             </header>
 
@@ -296,11 +287,6 @@
                         <div class="settings-sync-row">
                             <span class="settings-sync-pill online" id="settings-sync-badge">Sincronizado en Vivo</span>
                             <button type="button" class="btn btn-outline btn-sm" id="btn-sync-settings-now">Sincronizar Ahora</button>
-                        </div>
-                        <div style="margin-top: 14px;">
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-open-sync-modal-settings" style="width: 100%;">
-                                Compartir / Enlazar con tu Pareja
-                            </button>
                         </div>
                     </div>
 
@@ -559,43 +545,6 @@
         </div>
     </div>
 
-    <!-- MODAL 5: SYNC & COUPLE PAIRING SETTINGS -->
-    <div id="modal-sync-settings" class="modal-backdrop">
-        <div class="modal-card">
-            <button class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
-            <div class="modal-body">
-                <h2 class="form-title">Sincronización de Pareja 🔗</h2>
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-                    Enlaza tu celular y tu PC (o el celular de tu pareja) para que los cambios se actualicen automáticamente en tiempo real.
-                </p>
-                
-                <div class="form-group">
-                    <label>Enlace Directo de Sincronización:</label>
-                    <div style="display: flex; gap: 8px; margin-top: 6px;">
-                        <input type="text" id="sync-share-url-input" readonly style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-main); background: var(--bg-app); font-size: 12px; font-weight: 600;">
-                        <button id="btn-copy-sync-link" class="btn btn-primary btn-sm">📋 Copiar Enlace</button>
-                    </div>
-                    <small style="display: block; margin-top: 4px; font-size: 11px; color: var(--text-light);">
-                        Envía este enlace a tu pareja o ábrelo en tu celular para sincronizar ambos dispositivos al instante.
-                    </small>
-                </div>
-
-                <div class="form-group" style="margin-top: 20px;">
-                    <label for="sync-custom-id-input">ID / Código del Espacio Compartido:</label>
-                    <div style="display: flex; gap: 8px; margin-top: 6px;">
-                        <input type="text" id="sync-custom-id-input" placeholder="Ej: 019fbade-1802-774b-9d4f-83f1b6c3ca01" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-main); background: var(--bg-card); font-size: 12px; color: var(--text-main);">
-                        <button id="btn-connect-sync-id" class="btn btn-primary btn-sm">🔗 Conectar</button>
-                    </div>
-                </div>
-
-                <div class="form-actions" style="margin-top: 24px; justify-content: space-between;">
-                    <button type="button" id="btn-force-sync-now" class="btn btn-outline btn-sm">🔄 Sincronizar Ahora</button>
-                    <button type="button" class="btn btn-primary btn-sm btn-close-modal">Listo</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- LOCK & LOGIN SCREEN OVERLAY -->
     <div id="lock-screen-overlay" class="lock-screen-overlay">
         <div class="lock-screen-card">
@@ -683,6 +632,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=56.0"></script>
+    <script src="app.js?v=57.0"></script>
 </body>
 </html>

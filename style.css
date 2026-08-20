@@ -319,20 +319,6 @@ h1 {
     color: var(--text-muted);
 }
 
-.header-controls-mobile {
-    display: none;
-}
-
-.mobile-theme-dropdown {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border-main);
-    background: var(--bg-card);
-    color: var(--text-main);
-    font-size: 13px;
-    font-weight: 700;
-}
-
 /* Tab Views */
 .tab-view {
     display: flex;
@@ -1278,7 +1264,6 @@ h1 {
     }
     .sidebar { display: none !important; }
     .bottom-nav { display: flex; }
-    .header-controls-mobile { display: block; }
     .main-content {
         height: calc(100% - 60px);
         overflow-y: auto;
