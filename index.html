@@ -10,7 +10,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-      const CURRENT_APP_VERSION = "61.0";
+      const CURRENT_APP_VERSION = "62.0";
       if (localStorage.getItem("duo_app_v") !== CURRENT_APP_VERSION) {
         localStorage.setItem("duo_app_v", CURRENT_APP_VERSION);
         if ('caches' in window) {
@@ -20,17 +20,17 @@
         }
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js?v=61.0').catch(function() {});
+        navigator.serviceWorker.register('service-worker.js?v=62.0').catch(function() {});
       }
     </script>
     
     <!-- PWA / iOS Meta Tags -->
-    <link rel="manifest" href="manifest.json?v=61.0">
+    <link rel="manifest" href="manifest.json?v=62.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Horario Duo">
-    <link rel="icon" href="icon-chiikawa.png?v=61.0" type="image/png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=61.0">
+    <link rel="icon" href="icon-chiikawa.png?v=62.0" type="image/png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=62.0">
     <meta name="theme-color" content="#faf5f4">
 
     <!-- Google Fonts -->
@@ -38,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=61.0">
+    <link rel="stylesheet" href="style.css?v=62.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -246,16 +246,25 @@
 
                     <!-- CARD 1: Perfil de Sesión Activa -->
                     <div class="settings-card">
-                        <div class="settings-card-title">Perfil de Sesión</div>
+                        <div class="settings-card-title">Perfil en este Dispositivo</div>
+                        <p class="settings-card-desc">Indica quién está usando este celular para recibir las notificaciones correspondientes:</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-set-user-he" style="padding: 9px; font-weight: 800;">
+                                Soy Javi
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-set-user-she" style="padding: 9px; font-weight: 800;">
+                                Soy Mari
+                            </button>
+                        </div>
                         <div class="settings-user-row">
                             <div class="settings-user-info">
                                 <span class="settings-user-avatar" id="settings-avatar-icon">J</span>
                                 <div>
                                     <div class="settings-user-name" id="settings-username-text">Javi</div>
-                                    <div class="settings-user-sub">Sesión activa en este dispositivo</div>
+                                    <div class="settings-user-sub" id="settings-user-role-sub">Perfil activo en este teléfono</div>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline btn-sm" id="btn-logout-settings">Cerrar Sesión</button>
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-logout-settings">Bloquear App</button>
                         </div>
                     </div>
 
@@ -643,6 +652,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=61.0"></script>
+    <script src="app.js?v=62.0"></script>
 </body>
 </html>

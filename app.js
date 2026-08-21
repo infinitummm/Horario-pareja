@@ -216,14 +216,29 @@ function updateUserProfileChip() {
 
     const settingsAvatarEl = document.getElementById("settings-avatar-icon");
     const settingsNameEl = document.getElementById("settings-username-text");
+    const settingsRoleSub = document.getElementById("settings-user-role-sub");
     if (settingsAvatarEl) settingsAvatarEl.textContent = user.avatar;
     if (settingsNameEl) settingsNameEl.textContent = user.name;
+    if (settingsRoleSub) settingsRoleSub.textContent = `Perfil activo: ${user.name}`;
+
+    const btnHe = document.getElementById("btn-set-user-he");
+    const btnShe = document.getElementById("btn-set-user-she");
+    if (btnHe && btnShe) {
+        if (currentActiveUser === "he") {
+            btnHe.className = "btn btn-primary btn-sm";
+            btnShe.className = "btn btn-outline btn-sm";
+        } else {
+            btnHe.className = "btn btn-outline btn-sm";
+            btnShe.className = "btn btn-primary btn-sm";
+        }
+    }
 }
 
 function applyUserSessionDefaults(userKey) {
     currentActiveUser = userKey;
     localStorage.setItem("duo_active_user", userKey);
     updateUserProfileChip();
+    try { subscribeToPushNotifications(); } catch(e) {}
 
     // 1. Schedule default subtab
     currentScheduleView = userKey; // 'he' or 'she'
@@ -532,6 +547,17 @@ function mergeCloudState(cloud) {
     if (!cloud || typeof cloud !== "object") return false;
     let changed = false;
 
+    // 0. Process Immediate Cloud Notification
+    if (cloud.lastNotification && cloud.lastNotification.id) {
+        let lastHandledId = Number(localStorage.getItem("duo_last_handled_notif_id") || "0");
+        if (cloud.lastNotification.id > lastHandledId) {
+            localStorage.setItem("duo_last_handled_notif_id", String(cloud.lastNotification.id));
+            if (cloud.lastNotification.sender !== currentActiveUser) {
+                triggerLocalNotification(cloud.lastNotification.title, cloud.lastNotification.body);
+            }
+        }
+    }
+
     // 1. Synchronize Love Notes (cloud array is authoritative across all devices)
     if (Array.isArray(cloud.notes)) {
         if (knownNoteIds === null) {
@@ -619,7 +645,7 @@ function mergeCloudState(cloud) {
 
 let firebaseUnsubscribe = null;
 
-function pushToCloud() {
+function pushToCloud(latestNotif = null) {
     saveToLocalStorage();
     isPushing = true;
 
@@ -634,6 +660,11 @@ function pushToCloud() {
         attendance: attendance,
         lastUpdated: Date.now()
     };
+
+    if (latestNotif) {
+        payload.lastNotification = latestNotif;
+        localStorage.setItem("duo_last_handled_notif_id", String(latestNotif.id));
+    }
 
     lastCloudSnapshot = JSON.stringify(payload.heClasses) + JSON.stringify(payload.sheClasses) + 
                         JSON.stringify(payload.notes) + JSON.stringify(payload.tasks) + 
@@ -1431,8 +1462,14 @@ function renderTasks() {
             if (e) e.stopPropagation();
             showTaskCompletedModal();
             const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
-            sendPushNotificationToOtherUser("Horario Duo - Tarea Completada", `${actorName} ha completado la tarea: ${task.name}`);
-            deleteTask(task.id, false);
+            const notif = {
+                id: Date.now(),
+                sender: currentActiveUser,
+                title: "Horario Duo - Tarea Completada",
+                body: `${actorName} ha completado la tarea: ${task.name}`
+            };
+            sendPushNotificationToOtherUser(notif.title, notif.body);
+            deleteTask(task.id, false, notif);
         };
 
         check.addEventListener("click", completeTaskHandler);
@@ -1476,10 +1513,10 @@ function showTaskCompletedModal() {
     }, 3000);
 }
 
-window.deleteTask = function(id, showNotice = true) {
+window.deleteTask = function(id, showNotice = true, latestNotif = null) {
     duoTasks = duoTasks.filter(t => t.id !== id);
     saveToLocalStorage();
-    pushToCloud();
+    pushToCloud(latestNotif);
     renderTasks();
     if (showNotice) showToast("Tarea eliminada");
 };
@@ -1712,7 +1749,16 @@ function setupEventListeners() {
         closeAllModals();
         
         const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
-        sendPushNotificationToOtherUser("Horario Duo - Nueva Tarea", `${actorName} ha agregado la tarea: ${name}`);
+        const notif = {
+            id: Date.now(),
+            sender: currentActiveUser,
+            title: "Horario Duo - Nueva Tarea",
+            body: `${actorName} ha agregado la tarea: ${name}`
+        };
+        pushToCloud(notif);
+        sendPushNotificationToOtherUser(notif.title, notif.body);
+        renderTasks();
+        closeAllModals();
         showToast("Tarea compartida agregada");
     });
 
@@ -1744,13 +1790,19 @@ function setupEventListeners() {
             loveNotes = loveNotes.slice(0, 1000);
         }
 
-        renderLoveNotes();
-        closeAllModals();
-        pushToCloud();
-
         const senderName = sender === "he" ? "Javi" : "Mari";
         const preview = content.length > 50 ? content.substring(0, 47) + "..." : content;
-        sendPushNotificationToOtherUser("Horario Duo - Notita Nueva", `${senderName} te ha dejado una notita: "${preview}"`);
+        const notif = {
+            id: Date.now(),
+            sender: sender,
+            title: "Horario Duo - Notita Nueva",
+            body: `${senderName} te ha dejado una notita: "${preview}"`
+        };
+
+        renderLoveNotes();
+        closeAllModals();
+        pushToCloud(notif);
+        sendPushNotificationToOtherUser(notif.title, notif.body);
         showToast("Notita publicada");
     });
 
@@ -1804,6 +1856,22 @@ function setupEventListeners() {
                 setTimeout(() => pinInput.focus(), 300);
             }
             showToast("Sesión cerrada");
+        });
+    }
+
+    const btnSetUserHe = document.getElementById("btn-set-user-he");
+    if (btnSetUserHe) {
+        btnSetUserHe.addEventListener("click", () => {
+            applyUserSessionDefaults("he");
+            showToast("Dispositivo configurado: Soy Javi");
+        });
+    }
+
+    const btnSetUserShe = document.getElementById("btn-set-user-she");
+    if (btnSetUserShe) {
+        btnSetUserShe.addEventListener("click", () => {
+            applyUserSessionDefaults("she");
+            showToast("Dispositivo configurado: Soy Mari");
         });
     }
 
