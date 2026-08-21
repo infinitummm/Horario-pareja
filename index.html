@@ -10,19 +10,17 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-      const CURRENT_APP_VERSION = "58.0";
+      const CURRENT_APP_VERSION = "59.0";
       if (localStorage.getItem("duo_app_v") !== CURRENT_APP_VERSION) {
         localStorage.setItem("duo_app_v", CURRENT_APP_VERSION);
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(regs) {
-            for (let r of regs) r.unregister();
-          });
-        }
         if ('caches' in window) {
           caches.keys().then(function(names) {
             for (let n of names) caches.delete(n);
           });
         }
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js?v=59.0').catch(function() {});
       }
     </script>
     
@@ -40,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=58.0">
+    <link rel="stylesheet" href="style.css?v=59.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -288,6 +286,19 @@
                             <span class="settings-sync-pill online" id="settings-sync-badge">Sincronizado en Vivo</span>
                             <button type="button" class="btn btn-outline btn-sm" id="btn-sync-settings-now">Sincronizar Ahora</button>
                         </div>
+                    </div>
+
+                    <!-- CARD 4: Notificaciones Push del Dispositivo -->
+                    <div class="settings-card">
+                        <div class="settings-card-title">Notificaciones del Dispositivo</div>
+                        <p class="settings-card-desc">Recibe avisos en tu pantalla de bloqueo y barra de estado cuando se agregue una notita o tarea:</p>
+                        <div class="settings-sync-row" style="margin-bottom: 10px;">
+                            <span class="settings-sync-pill offline" id="settings-notif-status-badge">Notificaciones Inactivas</span>
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-toggle-notif">Activar Notificaciones</button>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" id="btn-test-notif" style="width: 100%;">
+                            Enviar Notificación de Prueba
+                        </button>
                     </div>
 
                     <!-- CARD 4: Mantenimiento y Datos -->
@@ -632,6 +643,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=58.0"></script>
+    <script src="app.js?v=59.0"></script>
 </body>
 </html>

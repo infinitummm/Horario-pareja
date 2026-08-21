@@ -161,6 +161,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupSyncPin();
     setupEventListeners();
     setupClassEditor();
+    setupPushNotifications();
     updateHeaderDate();
     scheduleMidnightRefresh();
 
@@ -1394,6 +1395,8 @@ function renderTasks() {
         const completeTaskHandler = (e) => {
             if (e) e.stopPropagation();
             showTaskCompletedModal();
+            const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
+            sendPushNotification("Horario Duo - Tarea Completada", `${actorName} ha completado la tarea: ${task.name}`);
             deleteTask(task.id, false);
         };
 
@@ -1672,6 +1675,9 @@ function setupEventListeners() {
         pushToCloud();
         renderTasks();
         closeAllModals();
+        
+        const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
+        sendPushNotification("Horario Duo - Nueva Tarea", `${actorName} ha agregado la tarea: ${name}`);
         showToast("Tarea compartida agregada");
     });
 
@@ -1706,6 +1712,10 @@ function setupEventListeners() {
         renderLoveNotes();
         closeAllModals();
         pushToCloud();
+
+        const senderName = sender === "he" ? "Javi" : "Mari";
+        const preview = content.length > 50 ? content.substring(0, 47) + "..." : content;
+        sendPushNotification("Horario Duo - Notita Nueva", `${senderName} te ha dejado una notita: "${preview}"`);
         showToast("Notita publicada");
     });
 
@@ -2013,3 +2023,164 @@ function showToast(msg) {
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 3000);
 }
+
+/* ==========================================================================
+   Push Notifications System (Background & Lock Screen Delivery - No Emojis)
+   ========================================================================== */
+const PUSH_CHANNEL_URL = "https://ntfy.sh/horario_duo_javi_mari_room_2026";
+
+async function sendPushNotification(title, body) {
+    if (!title || !body) return;
+    try {
+        await fetch(PUSH_CHANNEL_URL, {
+            method: "POST",
+            body: body,
+            headers: {
+                "Title": title,
+                "Priority": "high"
+            }
+        });
+    } catch (e) {
+        console.warn("Push delivery notice:", e);
+    }
+}
+
+function updateNotifStatusBadge() {
+    const badge = document.getElementById("settings-notif-status-badge");
+    const btn = document.getElementById("btn-toggle-notif");
+    if (!badge || !btn) return;
+
+    if (!("Notification" in window)) {
+        badge.textContent = "No Soportado";
+        badge.className = "settings-sync-pill offline";
+        btn.disabled = true;
+        btn.textContent = "No Soportado";
+        return;
+    }
+
+    if (Notification.permission === "granted") {
+        badge.textContent = "Notificaciones Activas";
+        badge.className = "settings-sync-pill online";
+        btn.textContent = "Notificaciones Activadas";
+        btn.className = "btn btn-outline btn-sm";
+    } else if (Notification.permission === "denied") {
+        badge.textContent = "Permiso Bloqueado";
+        badge.className = "settings-sync-pill offline";
+        btn.textContent = "Desbloquear en Navegador";
+        btn.className = "btn btn-outline btn-sm";
+    } else {
+        badge.textContent = "Notificaciones Inactivas";
+        badge.className = "settings-sync-pill offline";
+        btn.textContent = "Activar Notificaciones";
+        btn.className = "btn btn-primary btn-sm";
+    }
+}
+
+function setupPushNotifications() {
+    updateNotifStatusBadge();
+
+    const btnToggleNotif = document.getElementById("btn-toggle-notif");
+    if (btnToggleNotif) {
+        btnToggleNotif.addEventListener("click", async () => {
+            if (!("Notification" in window)) {
+                showToast("Tu navegador o dispositivo no soporta notificaciones");
+                return;
+            }
+            if (Notification.permission === "granted") {
+                showToast("Las notificaciones ya estan activas");
+                return;
+            }
+            try {
+                const permission = await Notification.requestPermission();
+                updateNotifStatusBadge();
+                if (permission === "granted") {
+                    showToast("Notificaciones activadas correctamente");
+                    subscribeToPushNotifications();
+                    sendPushNotification("Horario Duo", "Notificaciones activadas en este dispositivo");
+                } else {
+                    showToast("Permiso de notificaciones denegado");
+                }
+            } catch (err) {
+                console.error("Error al solicitar permiso:", err);
+            }
+        });
+    }
+
+    const btnTestNotif = document.getElementById("btn-test-notif");
+    if (btnTestNotif) {
+        btnTestNotif.addEventListener("click", async () => {
+            if (!("Notification" in window)) {
+                showToast("Tu navegador no soporta notificaciones");
+                return;
+            }
+            if (Notification.permission !== "granted") {
+                const permission = await Notification.requestPermission();
+                updateNotifStatusBadge();
+                if (permission !== "granted") {
+                    showToast("Debes activar las notificaciones primero");
+                    return;
+                }
+            }
+            showToast("Enviando notificacion de prueba...");
+            const userName = currentActiveUser === "he" ? "Javi" : "Mari";
+            await sendPushNotification("Horario Duo", `Notificacion de prueba enviada por ${userName}`);
+
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification("Horario Duo", {
+                        body: "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.",
+                        icon: "icon-192.png",
+                        badge: "icon-192.png",
+                        vibrate: [200, 100, 200]
+                    });
+                });
+            } else {
+                new Notification("Horario Duo", {
+                    body: "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.",
+                    icon: "icon-192.png"
+                });
+            }
+        });
+    }
+
+    if ("Notification" in window && Notification.permission === "granted") {
+        subscribeToPushNotifications();
+    }
+}
+
+function subscribeToPushNotifications() {
+    if (window.notifEventSource) return;
+    try {
+        const source = new EventSource(`${PUSH_CHANNEL_URL}/sse`);
+        window.notifEventSource = source;
+        source.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === "message" && data.message) {
+                    const title = data.title || "Horario Duo";
+                    const body = data.message;
+                    if (Notification.permission === "granted" && document.visibilityState !== "visible") {
+                        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.ready.then(reg => {
+                                reg.showNotification(title, {
+                                    body: body,
+                                    icon: "icon-192.png",
+                                    badge: "icon-192.png",
+                                    vibrate: [200, 100, 200]
+                                });
+                            });
+                        } else {
+                            new Notification(title, {
+                                body: body,
+                                icon: "icon-192.png"
+                            });
+                        }
+                    }
+                }
+            } catch (err) {}
+        };
+    } catch (e) {
+        console.warn("EventSource error:", e);
+    }
+}
+
