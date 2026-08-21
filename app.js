@@ -525,12 +525,30 @@ function saveToLocalStorage() {
     } catch(e) {}
 }
 
+let knownNoteIds = null;
+let knownTaskIds = null;
+
 function mergeCloudState(cloud) {
     if (!cloud || typeof cloud !== "object") return false;
     let changed = false;
 
     // 1. Synchronize Love Notes (cloud array is authoritative across all devices)
     if (Array.isArray(cloud.notes)) {
+        if (knownNoteIds === null) {
+            knownNoteIds = new Set(cloud.notes.map(n => n.id));
+        } else {
+            cloud.notes.forEach(note => {
+                if (note && note.id && !knownNoteIds.has(note.id)) {
+                    knownNoteIds.add(note.id);
+                    if (note.sender !== currentActiveUser) {
+                        const senderName = note.sender === "he" ? "Javi" : "Mari";
+                        const preview = (note.content || "").length > 50 ? (note.content || "").substring(0, 47) + "..." : (note.content || "");
+                        triggerLocalNotification("Horario Duo - Notita Nueva", `${senderName} te ha dejado una notita: "${preview}"`);
+                    }
+                }
+            });
+        }
+
         if (JSON.stringify(cloud.notes) !== JSON.stringify(loveNotes)) {
             loveNotes = cloud.notes;
             migrateNoteDates(loveNotes);
@@ -541,6 +559,23 @@ function mergeCloudState(cloud) {
     // 2. Synchronize Tasks (cloud array is authoritative across all devices, filtering any completed tasks)
     if (Array.isArray(cloud.tasks)) {
         const cleanCloudTasks = cloud.tasks.filter(t => t && !t.completed);
+        const currentTaskIds = new Set(cleanCloudTasks.map(t => t.id));
+
+        if (knownTaskIds === null) {
+            knownTaskIds = currentTaskIds;
+        } else {
+            cleanCloudTasks.forEach(task => {
+                if (task && task.id && !knownTaskIds.has(task.id)) {
+                    knownTaskIds.add(task.id);
+                    if (task.assigned !== currentActiveUser) {
+                        const actorName = currentActiveUser === "he" ? "Mari" : "Javi";
+                        triggerLocalNotification("Horario Duo - Nueva Tarea", `${actorName} ha agregado la tarea: ${task.name}`);
+                    }
+                }
+            });
+            knownTaskIds = currentTaskIds;
+        }
+
         if (JSON.stringify(cleanCloudTasks) !== JSON.stringify(duoTasks)) {
             duoTasks = cleanCloudTasks;
             changed = true;
@@ -2028,6 +2063,7 @@ function showToast(msg) {
    Push Notifications System (Background & Lock Screen Delivery - No Emojis)
    ========================================================================== */
 const PUSH_CHANNEL_URL = "https://ntfy.sh/horario_duo_javi_mari_room_2026";
+const CHIIKAWA_NOTIF_IMAGE_URL = "https://raw.githubusercontent.com/infinitummm/Horario-pareja/main/icon-chiikawa-notif.png";
 
 async function sendPushNotification(title, body) {
     if (!title || !body) return;
@@ -2037,11 +2073,44 @@ async function sendPushNotification(title, body) {
             body: body,
             headers: {
                 "Title": title,
-                "Priority": "high"
+                "Priority": "high",
+                "Icon": CHIIKAWA_NOTIF_IMAGE_URL,
+                "Attach": CHIIKAWA_NOTIF_IMAGE_URL,
+                "Click": "https://infinitummm.github.io/Horario-pareja/"
             }
         });
     } catch (e) {
         console.warn("Push delivery notice:", e);
+    }
+}
+
+function triggerLocalNotification(title, body) {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+                reg.showNotification(title, {
+                    body: body,
+                    icon: "icon-chiikawa-notif.png",
+                    badge: "icon-chiikawa-notif.png",
+                    image: "icon-chiikawa-notif.png",
+                    vibrate: [200, 100, 200],
+                    tag: "horario-duo-notif-" + Date.now(),
+                    renotify: true,
+                    data: {
+                        url: window.location.origin
+                    }
+                });
+            });
+        } else {
+            new Notification(title, {
+                body: body,
+                icon: "icon-chiikawa-notif.png",
+                image: "icon-chiikawa-notif.png"
+            });
+        }
+    } catch (e) {
+        console.warn("Local notif error:", e);
     }
 }
 
@@ -2124,22 +2193,7 @@ function setupPushNotifications() {
             showToast("Enviando notificacion de prueba...");
             const userName = currentActiveUser === "he" ? "Javi" : "Mari";
             await sendPushNotification("Horario Duo", `Notificacion de prueba enviada por ${userName}`);
-
-            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.ready.then(reg => {
-                    reg.showNotification("Horario Duo", {
-                        body: "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.",
-                        icon: "icon-192.png",
-                        badge: "icon-192.png",
-                        vibrate: [200, 100, 200]
-                    });
-                });
-            } else {
-                new Notification("Horario Duo", {
-                    body: "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.",
-                    icon: "icon-192.png"
-                });
-            }
+            triggerLocalNotification("Horario Duo", "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.");
         });
     }
 
@@ -2149,7 +2203,9 @@ function setupPushNotifications() {
 }
 
 function subscribeToPushNotifications() {
-    if (window.notifEventSource) return;
+    if (window.notifEventSource) {
+        try { window.notifEventSource.close(); } catch(e) {}
+    }
     try {
         const source = new EventSource(`${PUSH_CHANNEL_URL}/sse`);
         window.notifEventSource = source;
@@ -2159,25 +2215,16 @@ function subscribeToPushNotifications() {
                 if (data.event === "message" && data.message) {
                     const title = data.title || "Horario Duo";
                     const body = data.message;
-                    if (Notification.permission === "granted" && document.visibilityState !== "visible") {
-                        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                            navigator.serviceWorker.ready.then(reg => {
-                                reg.showNotification(title, {
-                                    body: body,
-                                    icon: "icon-192.png",
-                                    badge: "icon-192.png",
-                                    vibrate: [200, 100, 200]
-                                });
-                            });
-                        } else {
-                            new Notification(title, {
-                                body: body,
-                                icon: "icon-192.png"
-                            });
-                        }
+                    if (Notification.permission === "granted") {
+                        triggerLocalNotification(title, body);
                     }
                 }
             } catch (err) {}
+        };
+        source.onerror = () => {
+            try { source.close(); } catch(e) {}
+            window.notifEventSource = null;
+            setTimeout(subscribeToPushNotifications, 10000);
         };
     } catch (e) {
         console.warn("EventSource error:", e);
