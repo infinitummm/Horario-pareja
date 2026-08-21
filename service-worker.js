@@ -2,7 +2,7 @@
    Horario Duo - Service Worker with Web Push Notifications & Chiikawa Image
    ========================================================================== */
 
-const CACHE_NAME = "horario-duo-v62";
+const CACHE_NAME = "horario-duo-v63";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
@@ -29,10 +29,12 @@ self.addEventListener("push", (event) => {
   let body = "Tienes una nueva actualizacion en tu espacio.";
   let icon = "icon-chiikawa-notif.png";
   let image = "icon-chiikawa-notif.png";
+  let notifId = "";
 
   if (event.data) {
     try {
       const data = event.data.json();
+      if (data.id) notifId = data.id;
       if (data.title) title = data.title;
       if (data.body) body = data.body;
       if (data.message) body = data.message;
@@ -43,14 +45,16 @@ self.addEventListener("push", (event) => {
     }
   }
 
+  const dedupeTag = notifId ? ("horario-duo-" + notifId) : ("horario-duo-" + title.substring(0, 15));
+
   const options = {
     body: body,
     icon: icon,
     badge: icon,
     image: image,
     vibrate: [200, 100, 200],
-    tag: "horario-duo-notif-" + Date.now(),
-    renotify: true,
+    tag: dedupeTag,
+    renotify: false,
     data: {
       url: self.location.origin
     }
