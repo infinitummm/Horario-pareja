@@ -1767,10 +1767,11 @@ function setupEventListeners() {
             title: "Horario Duo - Nueva Tarea",
             body: `${actorName} ha agregado la tarea: ${name}`
         };
-        pushToCloud(notif);
-        sendPushNotification(notif.id, notif.title, notif.body);
         renderTasks();
         closeAllModals();
+        document.getElementById("form-task-name").value = "";
+        try { pushToCloud(notif); } catch(e) { console.error("Cloud push error:", e); }
+        try { sendPushNotification(notif.id, notif.title, notif.body); } catch(e) { console.error("Push error:", e); }
         showToast("Tarea compartida agregada");
     });
 
@@ -1816,8 +1817,9 @@ function setupEventListeners() {
 
         renderLoveNotes();
         closeAllModals();
-        pushToCloud(notif);
-        sendPushNotification(notif.id, notif.title, notif.body);
+        document.getElementById("note-content").value = "";
+        try { pushToCloud(notif); } catch(e) { console.error("Cloud push error:", e); }
+        try { sendPushNotification(notif.id, notif.title, notif.body); } catch(e) { console.error("Push error:", e); }
         showToast("Notita publicada");
     });
 
@@ -2152,6 +2154,7 @@ const PUSH_TOPICS = {
 const CHIIKAWA_NOTIF_IMAGE_URL = "https://raw.githubusercontent.com/infinitummm/Horario-pareja/main/icon-chiikawa-notif.png";
 
 // Central Notification Deduplicator (Guarantees strictly 1 notification per action)
+const locallyCreatedActionIds = new Set();
 const processedNotificationIds = new Set();
 
 function handleIncomingNotification(notifId, title, body) {

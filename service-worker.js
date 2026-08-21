@@ -2,7 +2,7 @@
    Horario Duo - Service Worker with Web Push Notifications & Chiikawa Image
    ========================================================================== */
 
-const CACHE_NAME = "horario-duo-v65";
+const CACHE_NAME = "horario-duo-v66";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
