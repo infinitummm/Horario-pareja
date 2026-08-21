@@ -1431,7 +1431,7 @@ function renderTasks() {
             if (e) e.stopPropagation();
             showTaskCompletedModal();
             const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
-            sendPushNotification("Horario Duo - Tarea Completada", `${actorName} ha completado la tarea: ${task.name}`);
+            sendPushNotificationToOtherUser("Horario Duo - Tarea Completada", `${actorName} ha completado la tarea: ${task.name}`);
             deleteTask(task.id, false);
         };
 
@@ -1712,7 +1712,7 @@ function setupEventListeners() {
         closeAllModals();
         
         const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
-        sendPushNotification("Horario Duo - Nueva Tarea", `${actorName} ha agregado la tarea: ${name}`);
+        sendPushNotificationToOtherUser("Horario Duo - Nueva Tarea", `${actorName} ha agregado la tarea: ${name}`);
         showToast("Tarea compartida agregada");
     });
 
@@ -1750,7 +1750,7 @@ function setupEventListeners() {
 
         const senderName = sender === "he" ? "Javi" : "Mari";
         const preview = content.length > 50 ? content.substring(0, 47) + "..." : content;
-        sendPushNotification("Horario Duo - Notita Nueva", `${senderName} te ha dejado una notita: "${preview}"`);
+        sendPushNotificationToOtherUser("Horario Duo - Notita Nueva", `${senderName} te ha dejado una notita: "${preview}"`);
         showToast("Notita publicada");
     });
 
@@ -2062,13 +2062,19 @@ function showToast(msg) {
 /* ==========================================================================
    Push Notifications System (Background & Lock Screen Delivery - No Emojis)
    ========================================================================== */
-const PUSH_CHANNEL_URL = "https://ntfy.sh/horario_duo_javi_mari_room_2026";
+const PUSH_CHANNELS = {
+    he: "https://ntfy.sh/horario_duo_target_javi_9921",
+    she: "https://ntfy.sh/horario_duo_target_mari_9921"
+};
 const CHIIKAWA_NOTIF_IMAGE_URL = "https://raw.githubusercontent.com/infinitummm/Horario-pareja/main/icon-chiikawa-notif.png";
 
-async function sendPushNotification(title, body) {
+async function sendPushNotificationToOtherUser(title, body) {
     if (!title || !body) return;
+    const targetUser = currentActiveUser === "he" ? "she" : "he";
+    const targetChannelUrl = PUSH_CHANNELS[targetUser];
+
     try {
-        await fetch(PUSH_CHANNEL_URL, {
+        await fetch(targetChannelUrl, {
             method: "POST",
             body: body,
             headers: {
@@ -2165,7 +2171,7 @@ function setupPushNotifications() {
                 if (permission === "granted") {
                     showToast("Notificaciones activadas correctamente");
                     subscribeToPushNotifications();
-                    sendPushNotification("Horario Duo", "Notificaciones activadas en este dispositivo");
+                    triggerLocalNotification("Horario Duo", "Notificaciones activadas con exito en este dispositivo.");
                 } else {
                     showToast("Permiso de notificaciones denegado");
                 }
@@ -2190,9 +2196,7 @@ function setupPushNotifications() {
                     return;
                 }
             }
-            showToast("Enviando notificacion de prueba...");
-            const userName = currentActiveUser === "he" ? "Javi" : "Mari";
-            await sendPushNotification("Horario Duo", `Notificacion de prueba enviada por ${userName}`);
+            showToast("Mostrando notificacion de prueba...");
             triggerLocalNotification("Horario Duo", "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.");
         });
     }
@@ -2205,9 +2209,14 @@ function setupPushNotifications() {
 function subscribeToPushNotifications() {
     if (window.notifEventSource) {
         try { window.notifEventSource.close(); } catch(e) {}
+        window.notifEventSource = null;
     }
+    
+    const myChannelUrl = PUSH_CHANNELS[currentActiveUser || "he"];
+    if (!myChannelUrl) return;
+
     try {
-        const source = new EventSource(`${PUSH_CHANNEL_URL}/sse`);
+        const source = new EventSource(`${myChannelUrl}/sse`);
         window.notifEventSource = source;
         source.onmessage = (event) => {
             try {
@@ -2224,7 +2233,7 @@ function subscribeToPushNotifications() {
         source.onerror = () => {
             try { source.close(); } catch(e) {}
             window.notifEventSource = null;
-            setTimeout(subscribeToPushNotifications, 10000);
+            setTimeout(subscribeToPushNotifications, 8000);
         };
     } catch (e) {
         console.warn("EventSource error:", e);
