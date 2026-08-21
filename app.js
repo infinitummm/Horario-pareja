@@ -565,16 +565,14 @@ function mergeCloudState(cloud) {
             cloud.notes.forEach(note => {
                 if (note && note.id && !knownNoteIds.has(note.id)) {
                     knownNoteIds.add(note.id);
-                    if (note.sender !== currentActiveUser) {
-                        const senderName = note.sender === "he" ? "Javi" : "Mari";
-                        const preview = (note.content || "").length > 50 ? (note.content || "").substring(0, 47) + "..." : (note.content || "");
-                        handleIncomingNotification(
-                            note.id,
-                            "Horario Duo - Notita Nueva",
-                            `${senderName} te ha dejado una notita: "${preview}"`,
-                            note.sender
-                        );
-                    }
+                    const senderName = note.sender === "he" ? "Javi" : "Mari";
+                    const preview = (note.content || "").length > 50 ? (note.content || "").substring(0, 47) + "..." : (note.content || "");
+                    handleIncomingNotification(
+                        note.id,
+                        "Horario Duo - Notita Nueva",
+                        `${senderName} te ha dejado una notita: "${preview}"`,
+                        note.sender
+                    );
                 }
             });
         }
@@ -597,16 +595,13 @@ function mergeCloudState(cloud) {
             cleanCloudTasks.forEach(task => {
                 if (task && task.id && !knownTaskIds.has(task.id)) {
                     knownTaskIds.add(task.id);
-                    if (task.assigned !== currentActiveUser) {
-                        const actorName = currentActiveUser === "he" ? "Mari" : "Javi";
-                        const sender = currentActiveUser === "he" ? "she" : "he";
-                        handleIncomingNotification(
-                            task.id,
-                            "Horario Duo - Nueva Tarea",
-                            `${actorName} ha agregado la tarea: ${task.name}`,
-                            sender
-                        );
-                    }
+                    const actorName = task.assigned === "he" ? "Javi" : "Mari";
+                    handleIncomingNotification(
+                        task.id,
+                        "Horario Duo - Nueva Tarea",
+                        `${actorName} ha agregado la tarea: ${task.name}`,
+                        task.assigned
+                    );
                 }
             });
             knownTaskIds = currentTaskIds;
@@ -1472,13 +1467,15 @@ function renderTasks() {
             if (e) e.stopPropagation();
             showTaskCompletedModal();
             const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
+            const notifId = `task-comp-${Date.now()}`;
+            locallyCreatedActionIds.add(notifId);
             const notif = {
-                id: Date.now(),
+                id: notifId,
                 sender: currentActiveUser,
                 title: "Horario Duo - Tarea Completada",
                 body: `${actorName} ha completado la tarea: ${task.name}`
             };
-            sendPushNotificationToOtherUser(notif.title, notif.body);
+            sendPushNotification(notif.id, notif.title, notif.body);
             deleteTask(task.id, false, notif);
         };
 
@@ -1758,15 +1755,17 @@ function setupEventListeners() {
         renderTasks();
         closeAllModals();
         
+        const notifId = `task-new-${Date.now()}`;
+        locallyCreatedActionIds.add(notifId);
         const actorName = currentActiveUser === "he" ? "Javi" : "Mari";
         const notif = {
-            id: Date.now(),
+            id: notifId,
             sender: currentActiveUser,
             title: "Horario Duo - Nueva Tarea",
             body: `${actorName} ha agregado la tarea: ${name}`
         };
         pushToCloud(notif);
-        sendPushNotificationToOtherUser(notif.title, notif.body);
+        sendPushNotification(notif.id, notif.title, notif.body);
         renderTasks();
         closeAllModals();
         showToast("Tarea compartida agregada");
@@ -1787,8 +1786,11 @@ function setupEventListeners() {
 
         if (!content) return;
 
+        const notifId = `note-${Date.now()}`;
+        locallyCreatedActionIds.add(notifId);
+
         loveNotes.unshift({ 
-            id: `note-${Date.now()}`, 
+            id: notifId, 
             sender, 
             color, 
             content, 
@@ -1803,7 +1805,7 @@ function setupEventListeners() {
         const senderName = sender === "he" ? "Javi" : "Mari";
         const preview = content.length > 50 ? content.substring(0, 47) + "..." : content;
         const notif = {
-            id: Date.now(),
+            id: notifId,
             sender: sender,
             title: "Horario Duo - Notita Nueva",
             body: `${senderName} te ha dejado una notita: "${preview}"`
@@ -1812,7 +1814,7 @@ function setupEventListeners() {
         renderLoveNotes();
         closeAllModals();
         pushToCloud(notif);
-        sendPushNotificationToOtherUser(notif.title, notif.body);
+        sendPushNotification(notif.id, notif.title, notif.body);
         showToast("Notita publicada");
     });
 
@@ -2140,21 +2142,19 @@ function showToast(msg) {
 /* ==========================================================================
    Push Notifications System (Deduplicated & Instant Delivery - No Emojis)
    ========================================================================== */
-const PUSH_CHANNELS = {
-    he: "https://ntfy.sh/horario_duo_target_javi_9921",
-    she: "https://ntfy.sh/horario_duo_target_mari_9921"
-};
+const PUSH_CHANNEL_URL = "https://ntfy.sh/horario_duo_javi_mari_room_2026";
 const CHIIKAWA_NOTIF_IMAGE_URL = "https://raw.githubusercontent.com/infinitummm/Horario-pareja/main/icon-chiikawa-notif.png";
 
 // Central Notification Deduplicator (Guarantees strictly 1 notification per action)
+const locallyCreatedActionIds = new Set();
 const processedNotificationIds = new Set();
 
-function handleIncomingNotification(notifId, title, body, sender) {
+function handleIncomingNotification(notifId, title, body, sender = "") {
     if (!title || !body) return;
-    if (sender && sender === currentActiveUser) return; // Never notify the author
+    if (notifId && locallyCreatedActionIds.has(notifId)) return; // Created on this specific device
 
-    const dedupeKey = notifId ? `${notifId}_${title}` : `${title}_${body}`;
-    if (processedNotificationIds.has(dedupeKey)) return; // Already handled
+    const dedupeKey = notifId ? `${notifId}` : `${title}_${body}`;
+    if (processedNotificationIds.has(dedupeKey)) return; // Already displayed
     
     processedNotificationIds.add(dedupeKey);
     if (processedNotificationIds.size > 200) {
@@ -2165,23 +2165,21 @@ function handleIncomingNotification(notifId, title, body, sender) {
     triggerLocalNotification(title, body, notifId);
 }
 
-async function sendPushNotificationToOtherUser(notifId, title, body) {
+async function sendPushNotification(notifId, title, body) {
     if (!title || !body) return;
-    const targetUser = currentActiveUser === "he" ? "she" : "he";
-    const targetChannelUrl = PUSH_CHANNELS[targetUser];
-
-    // Mark as processed locally
-    const dedupeKey = notifId ? `${notifId}_${title}` : `${title}_${body}`;
-    processedNotificationIds.add(dedupeKey);
+    if (notifId) {
+        locallyCreatedActionIds.add(notifId);
+        processedNotificationIds.add(notifId);
+    }
 
     try {
-        await fetch(targetChannelUrl, {
+        await fetch(PUSH_CHANNEL_URL, {
             method: "POST",
             body: body,
             headers: {
                 "Title": title,
                 "Priority": "urgent",
-                "Tags": "love_letter",
+                "Tags": "incoming_envelope",
                 "X-Notif-Id": notifId || String(Date.now()),
                 "Icon": CHIIKAWA_NOTIF_IMAGE_URL,
                 "Attach": CHIIKAWA_NOTIF_IMAGE_URL,
@@ -2316,12 +2314,9 @@ function subscribeToPushNotifications() {
         try { window.notifEventSource.close(); } catch(e) {}
         window.notifEventSource = null;
     }
-    
-    const myChannelUrl = PUSH_CHANNELS[currentActiveUser || "he"];
-    if (!myChannelUrl) return;
 
     try {
-        const source = new EventSource(`${myChannelUrl}/sse`);
+        const source = new EventSource(`${PUSH_CHANNEL_URL}/sse`);
         window.notifEventSource = source;
         source.onmessage = (event) => {
             try {
@@ -2329,9 +2324,8 @@ function subscribeToPushNotifications() {
                 if (data.event === "message" && data.message) {
                     const title = data.title || "Horario Duo";
                     const body = data.message;
-                    const notifId = data.id || "sse-" + Date.now();
-                    const otherUser = currentActiveUser === "he" ? "she" : "he";
-                    handleIncomingNotification(notifId, title, body, otherUser);
+                    const notifId = (data.headers && data.headers["X-Notif-Id"]) || data.id || "sse-" + Date.now();
+                    handleIncomingNotification(notifId, title, body);
                 }
             } catch (err) {}
         };

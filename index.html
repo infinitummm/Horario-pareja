@@ -10,7 +10,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-      const CURRENT_APP_VERSION = "63.0";
+      const CURRENT_APP_VERSION = "64.0";
       if (localStorage.getItem("duo_app_v") !== CURRENT_APP_VERSION) {
         localStorage.setItem("duo_app_v", CURRENT_APP_VERSION);
         if ('caches' in window) {
@@ -20,17 +20,17 @@
         }
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js?v=63.0').catch(function() {});
+        navigator.serviceWorker.register('service-worker.js?v=64.0').catch(function() {});
       }
     </script>
     
     <!-- PWA / iOS Meta Tags -->
-    <link rel="manifest" href="manifest.json?v=63.0">
+    <link rel="manifest" href="manifest.json?v=64.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Horario Duo">
-    <link rel="icon" href="icon-chiikawa.png?v=63.0" type="image/png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=63.0">
+    <link rel="icon" href="icon-chiikawa.png?v=64.0" type="image/png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=64.0">
     <meta name="theme-color" content="#faf5f4">
 
     <!-- Google Fonts -->
@@ -38,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=63.0">
+    <link rel="stylesheet" href="style.css?v=64.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -652,6 +652,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=63.0"></script>
+    <script src="app.js?v=64.0"></script>
 </body>
 </html>
