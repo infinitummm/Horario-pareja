@@ -170,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderTasks();
     renderAttendance();
     renderLoveNotes();
+    try { checkTaskDueReminders(); } catch(e) {}
 
     // Start sync AFTER first render
     pullFromCloud();
@@ -177,6 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     window.addEventListener("resize", renderCurrentSchedule);
     setInterval(renderCurrentTimeIndicator, 60000);
+    setInterval(() => { try { checkTaskDueReminders(); } catch(e) {} }, 60 * 60 * 1000);
 });
 
 const APP_USERS = {
@@ -547,38 +549,8 @@ function mergeCloudState(cloud) {
     if (!cloud || typeof cloud !== "object") return false;
     let changed = false;
 
-    // 0. Process Immediate Cloud Notification
-    if (cloud.lastNotification && cloud.lastNotification.id) {
-        if (cloud.lastNotification.sender !== currentActiveUser) {
-            handleIncomingNotification(
-                cloud.lastNotification.id,
-                cloud.lastNotification.title,
-                cloud.lastNotification.body
-            );
-        }
-    }
-
     // 1. Synchronize Love Notes (cloud array is authoritative across all devices)
     if (Array.isArray(cloud.notes)) {
-        if (knownNoteIds === null) {
-            knownNoteIds = new Set(cloud.notes.map(n => n.id));
-        } else {
-            cloud.notes.forEach(note => {
-                if (note && note.id && !knownNoteIds.has(note.id)) {
-                    knownNoteIds.add(note.id);
-                    if (note.sender !== currentActiveUser) {
-                        const senderName = note.sender === "he" ? "Javi" : "Mari";
-                        const preview = (note.content || "").length > 50 ? (note.content || "").substring(0, 47) + "..." : (note.content || "");
-                        handleIncomingNotification(
-                            note.id,
-                            "Horario Duo - Notita Nueva",
-                            `${senderName} te ha dejado una notita: "${preview}"`
-                        );
-                    }
-                }
-            });
-        }
-
         if (JSON.stringify(cloud.notes) !== JSON.stringify(loveNotes)) {
             loveNotes = cloud.notes;
             migrateNoteDates(loveNotes);
@@ -589,27 +561,6 @@ function mergeCloudState(cloud) {
     // 2. Synchronize Tasks (cloud array is authoritative across all devices, filtering any completed tasks)
     if (Array.isArray(cloud.tasks)) {
         const cleanCloudTasks = cloud.tasks.filter(t => t && !t.completed);
-        const currentTaskIds = new Set(cleanCloudTasks.map(t => t.id));
-
-        if (knownTaskIds === null) {
-            knownTaskIds = currentTaskIds;
-        } else {
-            cleanCloudTasks.forEach(task => {
-                if (task && task.id && !knownTaskIds.has(task.id)) {
-                    knownTaskIds.add(task.id);
-                    if (task.assigned !== currentActiveUser) {
-                        const actorName = currentActiveUser === "he" ? "Mari" : "Javi";
-                        handleIncomingNotification(
-                            task.id,
-                            "Horario Duo - Nueva Tarea",
-                            `${actorName} ha agregado la tarea: ${task.name}`
-                        );
-                    }
-                }
-            });
-            knownTaskIds = currentTaskIds;
-        }
-
         if (JSON.stringify(cleanCloudTasks) !== JSON.stringify(duoTasks)) {
             duoTasks = cleanCloudTasks;
             changed = true;
@@ -647,6 +598,7 @@ function mergeCloudState(cloud) {
     if (changed) {
         migrateNoteDates(loveNotes);
         saveToLocalStorage();
+        try { checkTaskDueReminders(); } catch(e) {}
     }
     return changed;
 }
@@ -2203,6 +2155,110 @@ async function sendPushNotification(notifId, title, body) {
     }
 }
 
+// Send push notification to a specific assigned target (he, she, or both)
+async function sendPushNotificationToTarget(assigned, notifId, title, body) {
+    if (!title || !body) return;
+
+    let targets = [];
+    if (assigned === "both" || assigned === "all") {
+        targets = ["horario_duo_to_javi_2026", "horario_duo_to_mari_2026"];
+    } else if (assigned === "he") {
+        targets = ["horario_duo_to_javi_2026"];
+    } else if (assigned === "she") {
+        targets = ["horario_duo_to_mari_2026"];
+    } else {
+        const targetUser = currentActiveUser === "he" ? "she" : "he";
+        targets = [PUSH_TOPICS[targetUser]];
+    }
+
+    targets.forEach(async (topic) => {
+        try {
+            await fetch(`https://ntfy.sh/${topic}`, {
+                method: "POST",
+                body: body,
+                headers: {
+                    "Title": title,
+                    "Priority": "urgent",
+                    "Tags": "alarm_clock",
+                    "X-Notif-Id": notifId || String(Date.now()),
+                    "Icon": CHIIKAWA_NOTIF_IMAGE_URL,
+                    "Attach": CHIIKAWA_NOTIF_IMAGE_URL,
+                    "Click": "https://infinitummm.github.io/Horario-pareja/"
+                }
+            });
+        } catch (e) {
+            console.warn("Target push error:", e);
+        }
+    });
+}
+
+// Check and dispatch automated task due reminders (1 day before & today)
+function checkTaskDueReminders() {
+    if (!Array.isArray(duoTasks) || duoTasks.length === 0) return;
+
+    const now = new Date();
+    const todayYear = now.getFullYear();
+    const todayMonth = String(now.getMonth() + 1).padStart(2, "0");
+    const todayDay = String(now.getDate()).padStart(2, "0");
+    const todayStr = `${todayYear}-${todayMonth}-${todayDay}`;
+
+    const todayMidnight = new Date(todayYear, now.getMonth(), now.getDate()).getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    let remindersSent = {};
+    try {
+        remindersSent = JSON.parse(localStorage.getItem("duo_task_reminders_sent") || "{}");
+    } catch (e) {
+        remindersSent = {};
+    }
+
+    duoTasks.forEach(task => {
+        if (!task || task.completed || !task.dueDate) return;
+
+        const parts = String(task.dueDate).split("-");
+        if (parts.length !== 3) return;
+        const dueYear = parseInt(parts[0], 10);
+        const dueMonth = parseInt(parts[1], 10) - 1;
+        const dueDay = parseInt(parts[2], 10);
+        const taskDueMidnight = new Date(dueYear, dueMonth, dueDay).getTime();
+
+        const diffDays = Math.round((taskDueMidnight - todayMidnight) / oneDayMs);
+
+        // 1. Due Tomorrow (Falta 1 día)
+        if (diffDays === 1) {
+            const reminderKey = `${task.id}_due_1d_${todayStr}`;
+            if (!remindersSent[reminderKey]) {
+                remindersSent[reminderKey] = true;
+                localStorage.setItem("duo_task_reminders_sent", JSON.stringify(remindersSent));
+
+                const ownerName = task.assigned === "he" ? "Javi" : (task.assigned === "she" ? "Mari" : "Ambos");
+                sendPushNotificationToTarget(
+                    task.assigned,
+                    `remind-1d-${task.id}`,
+                    "Horario Duo - Recordatorio de Tarea",
+                    `Falta 1 dia para la tarea: ${task.name} (${ownerName}, vence manana)`
+                );
+            }
+        }
+        // 2. Due Today (Vence hoy)
+        else if (diffDays === 0) {
+            const reminderKey = `${task.id}_due_0d_${todayStr}`;
+            if (!remindersSent[reminderKey]) {
+                remindersSent[reminderKey] = true;
+                localStorage.setItem("duo_task_reminders_sent", JSON.stringify(remindersSent));
+
+                const ownerName = task.assigned === "he" ? "Javi" : (task.assigned === "she" ? "Mari" : "Ambos");
+                sendPushNotificationToTarget(
+                    task.assigned,
+                    `remind-0d-${task.id}`,
+                    "Horario Duo - Tarea para Hoy",
+                    `Hoy vence la tarea: ${task.name} (${ownerName})`
+                );
+            }
+        }
+    });
+}
+
 function triggerLocalNotification(title, body, notifId = "") {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     try {
@@ -2293,8 +2349,6 @@ function setupPushNotifications() {
                 updateNotifStatusBadge();
                 if (permission === "granted") {
                     showToast("Notificaciones activadas correctamente");
-                    subscribeToPushNotifications();
-                    triggerLocalNotification("Horario Duo", "Notificaciones activadas con exito en este dispositivo.", "setup-ok");
                 } else {
                     showToast("Permiso de notificaciones denegado");
                 }
@@ -2307,58 +2361,10 @@ function setupPushNotifications() {
     const btnTestNotif = document.getElementById("btn-test-notif");
     if (btnTestNotif) {
         btnTestNotif.addEventListener("click", async () => {
-            if (!("Notification" in window)) {
-                showToast("Tu navegador no soporta notificaciones");
-                return;
-            }
-            if (Notification.permission !== "granted") {
-                const permission = await Notification.requestPermission();
-                updateNotifStatusBadge();
-                if (permission !== "granted") {
-                    showToast("Debes activar las notificaciones primero");
-                    return;
-                }
-            }
-            showToast("Mostrando notificacion de prueba...");
-            triggerLocalNotification("Horario Duo", "Prueba exitosa. Recibiras avisos cuando tu pareja agregue notitas o tareas.", "test-" + Date.now());
+            showToast("Enviando notificacion de prueba...");
+            const testId = "test-" + Date.now();
+            sendPushNotification(testId, "Horario Duo - Prueba", "Prueba exitosa. Recibiras avisos de notas, tareas y recordatorios.");
         });
-    }
-
-    if ("Notification" in window && Notification.permission === "granted") {
-        subscribeToPushNotifications();
-    }
-}
-
-function subscribeToPushNotifications() {
-    if (window.notifEventSource) {
-        try { window.notifEventSource.close(); } catch(e) {}
-        window.notifEventSource = null;
-    }
-
-    const myTopic = PUSH_TOPICS[currentActiveUser || "he"];
-    const myChannelUrl = `https://ntfy.sh/${myTopic}/sse`;
-
-    try {
-        const source = new EventSource(myChannelUrl);
-        window.notifEventSource = source;
-        source.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.event === "message" && data.message) {
-                    const title = data.title || "Horario Duo";
-                    const body = data.message;
-                    const notifId = data.id || "sse-" + Date.now();
-                    handleIncomingNotification(notifId, title, body);
-                }
-            } catch (err) {}
-        };
-        source.onerror = () => {
-            try { source.close(); } catch(e) {}
-            window.notifEventSource = null;
-            setTimeout(subscribeToPushNotifications, 5000);
-        };
-    } catch (e) {
-        console.warn("EventSource error:", e);
     }
 }
 
