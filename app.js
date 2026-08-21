@@ -549,12 +549,13 @@ function mergeCloudState(cloud) {
 
     // 0. Process Immediate Cloud Notification
     if (cloud.lastNotification && cloud.lastNotification.id) {
-        handleIncomingNotification(
-            cloud.lastNotification.id,
-            cloud.lastNotification.title,
-            cloud.lastNotification.body,
-            cloud.lastNotification.sender
-        );
+        if (cloud.lastNotification.sender !== currentActiveUser) {
+            handleIncomingNotification(
+                cloud.lastNotification.id,
+                cloud.lastNotification.title,
+                cloud.lastNotification.body
+            );
+        }
     }
 
     // 1. Synchronize Love Notes (cloud array is authoritative across all devices)
@@ -565,14 +566,15 @@ function mergeCloudState(cloud) {
             cloud.notes.forEach(note => {
                 if (note && note.id && !knownNoteIds.has(note.id)) {
                     knownNoteIds.add(note.id);
-                    const senderName = note.sender === "he" ? "Javi" : "Mari";
-                    const preview = (note.content || "").length > 50 ? (note.content || "").substring(0, 47) + "..." : (note.content || "");
-                    handleIncomingNotification(
-                        note.id,
-                        "Horario Duo - Notita Nueva",
-                        `${senderName} te ha dejado una notita: "${preview}"`,
-                        note.sender
-                    );
+                    if (note.sender !== currentActiveUser) {
+                        const senderName = note.sender === "he" ? "Javi" : "Mari";
+                        const preview = (note.content || "").length > 50 ? (note.content || "").substring(0, 47) + "..." : (note.content || "");
+                        handleIncomingNotification(
+                            note.id,
+                            "Horario Duo - Notita Nueva",
+                            `${senderName} te ha dejado una notita: "${preview}"`
+                        );
+                    }
                 }
             });
         }
@@ -595,13 +597,14 @@ function mergeCloudState(cloud) {
             cleanCloudTasks.forEach(task => {
                 if (task && task.id && !knownTaskIds.has(task.id)) {
                     knownTaskIds.add(task.id);
-                    const actorName = task.assigned === "he" ? "Javi" : "Mari";
-                    handleIncomingNotification(
-                        task.id,
-                        "Horario Duo - Nueva Tarea",
-                        `${actorName} ha agregado la tarea: ${task.name}`,
-                        task.assigned
-                    );
+                    if (task.assigned !== currentActiveUser) {
+                        const actorName = currentActiveUser === "he" ? "Mari" : "Javi";
+                        handleIncomingNotification(
+                            task.id,
+                            "Horario Duo - Nueva Tarea",
+                            `${actorName} ha agregado la tarea: ${task.name}`
+                        );
+                    }
                 }
             });
             knownTaskIds = currentTaskIds;
@@ -2142,16 +2145,17 @@ function showToast(msg) {
 /* ==========================================================================
    Push Notifications System (Deduplicated & Instant Delivery - No Emojis)
    ========================================================================== */
-const PUSH_CHANNEL_URL = "https://ntfy.sh/horario_duo_javi_mari_room_2026";
+const PUSH_TOPICS = {
+    he: "horario_duo_to_javi_2026",
+    she: "horario_duo_to_mari_2026"
+};
 const CHIIKAWA_NOTIF_IMAGE_URL = "https://raw.githubusercontent.com/infinitummm/Horario-pareja/main/icon-chiikawa-notif.png";
 
 // Central Notification Deduplicator (Guarantees strictly 1 notification per action)
-const locallyCreatedActionIds = new Set();
 const processedNotificationIds = new Set();
 
-function handleIncomingNotification(notifId, title, body, sender = "") {
+function handleIncomingNotification(notifId, title, body) {
     if (!title || !body) return;
-    if (notifId && locallyCreatedActionIds.has(notifId)) return; // Created on this specific device
 
     const dedupeKey = notifId ? `${notifId}` : `${title}_${body}`;
     if (processedNotificationIds.has(dedupeKey)) return; // Already displayed
@@ -2165,15 +2169,20 @@ function handleIncomingNotification(notifId, title, body, sender = "") {
     triggerLocalNotification(title, body, notifId);
 }
 
+// Send push notification to the PARTNER's topic
 async function sendPushNotification(notifId, title, body) {
     if (!title || !body) return;
+
+    const targetUser = currentActiveUser === "he" ? "she" : "he";
+    const targetTopic = PUSH_TOPICS[targetUser];
+    const targetChannelUrl = `https://ntfy.sh/${targetTopic}`;
+
     if (notifId) {
-        locallyCreatedActionIds.add(notifId);
         processedNotificationIds.add(notifId);
     }
 
     try {
-        await fetch(PUSH_CHANNEL_URL, {
+        await fetch(targetChannelUrl, {
             method: "POST",
             body: body,
             headers: {
@@ -2226,6 +2235,14 @@ function triggerLocalNotification(title, body, notifId = "") {
 function updateNotifStatusBadge() {
     const badge = document.getElementById("settings-notif-status-badge");
     const btn = document.getElementById("btn-toggle-notif");
+    const linkChannel = document.getElementById("link-direct-channel");
+    
+    if (linkChannel) {
+        const myTopic = PUSH_TOPICS[currentActiveUser || "he"];
+        linkChannel.href = `https://ntfy.sh/${myTopic}`;
+        linkChannel.textContent = `Abrir Canal de ${currentActiveUser === "he" ? "Javi" : "Mari"}`;
+    }
+
     if (!badge || !btn) return;
 
     if (!("Notification" in window)) {
@@ -2315,8 +2332,11 @@ function subscribeToPushNotifications() {
         window.notifEventSource = null;
     }
 
+    const myTopic = PUSH_TOPICS[currentActiveUser || "he"];
+    const myChannelUrl = `https://ntfy.sh/${myTopic}/sse`;
+
     try {
-        const source = new EventSource(`${PUSH_CHANNEL_URL}/sse`);
+        const source = new EventSource(myChannelUrl);
         window.notifEventSource = source;
         source.onmessage = (event) => {
             try {
@@ -2324,7 +2344,7 @@ function subscribeToPushNotifications() {
                 if (data.event === "message" && data.message) {
                     const title = data.title || "Horario Duo";
                     const body = data.message;
-                    const notifId = (data.headers && data.headers["X-Notif-Id"]) || data.id || "sse-" + Date.now();
+                    const notifId = data.id || "sse-" + Date.now();
                     handleIncomingNotification(notifId, title, body);
                 }
             } catch (err) {}

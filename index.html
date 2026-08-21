@@ -10,7 +10,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <script>
-      const CURRENT_APP_VERSION = "64.0";
+      const CURRENT_APP_VERSION = "65.0";
       if (localStorage.getItem("duo_app_v") !== CURRENT_APP_VERSION) {
         localStorage.setItem("duo_app_v", CURRENT_APP_VERSION);
         if ('caches' in window) {
@@ -20,17 +20,17 @@
         }
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js?v=64.0').catch(function() {});
+        navigator.serviceWorker.register('service-worker.js?v=65.0').catch(function() {});
       }
     </script>
     
     <!-- PWA / iOS Meta Tags -->
-    <link rel="manifest" href="manifest.json?v=64.0">
+    <link rel="manifest" href="manifest.json?v=65.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Horario Duo">
-    <link rel="icon" href="icon-chiikawa.png?v=64.0" type="image/png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=64.0">
+    <link rel="icon" href="icon-chiikawa.png?v=65.0" type="image/png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=65.0">
     <meta name="theme-color" content="#faf5f4">
 
     <!-- Google Fonts -->
@@ -38,7 +38,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=64.0">
+    <link rel="stylesheet" href="style.css?v=65.0">
 </head>
 <body class="theme-pink">
     <div class="app-container">
@@ -300,14 +300,24 @@
                     <!-- CARD 4: Notificaciones Push del Dispositivo -->
                     <div class="settings-card">
                         <div class="settings-card-title">Notificaciones del Dispositivo</div>
-                        <p class="settings-card-desc">Recibe avisos en tu pantalla de bloqueo y barra de estado cuando se agregue una notita o tarea:</p>
+                        <p class="settings-card-desc">Recibe avisos con imagen de Chiikawa cuando tu pareja agregue notitas o tareas:</p>
                         <div class="settings-sync-row" style="margin-bottom: 10px;">
                             <span class="settings-sync-pill offline" id="settings-notif-status-badge">Notificaciones Inactivas</span>
                             <button type="button" class="btn btn-primary btn-sm" id="btn-toggle-notif">Activar Notificaciones</button>
                         </div>
-                        <button type="button" class="btn btn-outline btn-sm" id="btn-test-notif" style="width: 100%;">
+                        <button type="button" class="btn btn-outline btn-sm" id="btn-test-notif" style="width: 100%; margin-bottom: 12px;">
                             Enviar Notificación de Prueba
                         </button>
+                        
+                        <div style="background: rgba(216,108,128,0.08); border-radius: 12px; padding: 12px; font-size: 0.85rem; line-height: 1.4;">
+                            <div style="font-weight: 700; margin-bottom: 4px; color: var(--color-primary-dark, #a84255);">Alertas con la App Cerrada (Pantalla Bloqueada):</div>
+                            <div>Para que sigan sonando incluso si cierras la app por completo en iPhone o Android, puedes abrir tu canal directo:</div>
+                            <div style="margin-top: 8px; display: flex; gap: 8px;">
+                                <a id="link-direct-channel" href="https://ntfy.sh/horario_duo_to_javi_2026" target="_blank" class="btn btn-outline btn-sm" style="flex: 1; text-align: center; text-decoration: none; padding: 8px; font-weight: 700;">
+                                    Abrir Canal de Alertas
+                                </a>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- CARD 4: Mantenimiento y Datos -->
@@ -652,6 +662,6 @@
         window.dispatchEvent(new Event("firebase-ready"));
     </script>
     <!-- Main App Script -->
-    <script src="app.js?v=64.0"></script>
+    <script src="app.js?v=65.0"></script>
 </body>
 </html>
